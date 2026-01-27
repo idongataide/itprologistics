@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card,
-  Typography,
   Button,
   Table,
   Tag,
@@ -9,6 +8,7 @@ import {
   Modal,
   message,
   Tabs,
+  Typography,
 } from 'antd';
 import {
   CarOutlined,
@@ -22,6 +22,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getDriverRides, acceptRide, declineRide, Ride as RideType } from '../../../../services/rideService';
 
+const { Text } = Typography;
 
 const DriverRides: React.FC = () => {
   const navigate = useNavigate();
@@ -346,7 +347,7 @@ const DriverRides: React.FC = () => {
             dataSource={getFilteredRides()}
             columns={columns}
             pagination={{ pageSize: 5 }}
-            rowKey="id"
+            rowKey="_id"
             className="mt-4"
             rowClassName={(record) => 
               record.status === 'cancelled' ? 'bg-red-50' : ''
@@ -372,7 +373,7 @@ const DriverRides: React.FC = () => {
           <Button
             key="submit"
             danger
-            loading={loading}
+            loading={actionLoading}
             onClick={confirmDeclineRide}
             icon={<CloseCircleOutlined />}
           >
@@ -386,19 +387,19 @@ const DriverRides: React.FC = () => {
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <div className="flex justify-between items-center mb-2">
                 <Text strong>Ride ID:</Text>
-                <Text>{rideToDecline.id}</Text>
+                <Text>{rideToDecline._id.substring(0, 8)}</Text>
               </div>
               <div className="flex justify-between items-center mb-2">
                 <Text strong>From:</Text>
-                <Text>{rideToDecline.pickup}</Text>
+                <Text>{rideToDecline.pickupLocation.address}</Text>
               </div>
               <div className="flex justify-between items-center mb-2">
                 <Text strong>To:</Text>
-                <Text>{rideToDecline.destination}</Text>
+                <Text>{rideToDecline.destination.address}</Text>
               </div>
               <div className="flex justify-between items-center">
                 <Text strong>Fare:</Text>
-                <Text strong className="text-gray-900">N{rideToDecline.fare.toFixed(2)}</Text>
+                <Text strong className="text-gray-900">N{rideToDecline.totalFare.toFixed(2)}</Text>
               </div>
             </div>
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">

@@ -155,7 +155,7 @@ const Register: React.FC = () => {
                 className="h-[42px]! border-[#D0D5DD]"
               >
                 <Option value="user">User</Option>
-                <Option value="rider">Rider</Option>
+                {/* <Option value="rider">Rider</Option> */}
               </Select>
             </Form.Item>
           </Col>         

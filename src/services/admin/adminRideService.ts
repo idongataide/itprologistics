@@ -17,7 +17,7 @@ export interface Ride {
     address: string;
     coordinates: { lat: number; lng: number };
   };
-  status: 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'accepted' | 'in_progress' | 'awaiting_driver_confirmation' | 'completed' | 'cancelled';
   rideType: 'bicycle' | 'motorcycle' | 'car';
   totalFare: number;
   distance?: number;

@@ -106,6 +106,7 @@ export interface UpdateDriverData {
 }
 
 export interface DriversResponse {
+  stats: any;
   success: boolean;
   drivers: DriverDetail[];
   count: number;

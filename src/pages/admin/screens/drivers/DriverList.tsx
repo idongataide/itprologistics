@@ -6,16 +6,12 @@ import {
   Tag,
   Button,
   Space,
-  message,
   Input,
   Select,
   Popconfirm,
   Tooltip,
   Modal,
   Form,
-  Row,
-  Col,
-  Statistic,
 } from 'antd';
 import {
   SearchOutlined,
@@ -27,12 +23,20 @@ import {
   CloseCircleOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
-  UserSwitchOutlined,
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { DriverDetail, DriverSummaryStats } from '@/types';
+
+interface VehicleData {
+  _id: string;
+  make: string;
+  model: string;
+  year: number;
+  licensePlate: string;
+  color: string;
+}
 import driverService from '@/services/admin/driverService';
-import driverVehicleService, { VehicleData } from '@/services/admin/driverVehicle';
+import driverVehicleService from '@/services/admin/driverVehicle';
 import DriverDetailsModal from './DriverDetailsModal';
 import toast from 'react-hot-toast';
 
@@ -44,6 +48,16 @@ const { Search } = Input;
 interface DriverWithIncompleteDetails extends Omit<DriverDetail, '_id'> {
   _id: string;
   hasDriverDetails: boolean;
+  name: string;
+  email: string;
+  phone: string;
+  driverStatus?: string;
+  vehicle?: {
+    make: string;
+    model: string;
+    year: number;
+    licensePlate: string;
+  };
 }
 
 const DriverList: React.FC = () => {
@@ -181,7 +195,7 @@ const DriverList: React.FC = () => {
 
       setVehicleLoading(true);
       const data = await driverVehicleService.assignVehicleToDriver({
-        driverId: assigningDriver.driverId,
+        driverId: assigningDriver._id,
         vehicleId: values.vehicleId,
       });
       
@@ -202,7 +216,7 @@ const DriverList: React.FC = () => {
   const handleUnassignConfirm = async (driver: DriverWithIncompleteDetails) => {
     
     try {
-      const data = await driverVehicleService.unassignVehicleFromDriver(driver.id);
+      const data = await driverVehicleService.unassignVehicleFromDriver(driver._id);
       if (data.success) {
         toast.success('Vehicle unassigned successfully');
         fetchDrivers();
@@ -301,18 +315,19 @@ const DriverList: React.FC = () => {
           return <Tag color="orange">Details Required</Tag>;
         }
         
-        if (record.vehicle) {
+        if (record.vehicle || record.vehicleId) {
+          const vehicleData = record.vehicle || (typeof record.vehicleId === 'object' ? record.vehicleId : null);
           return (
             <div className="flex items-center justify-between">
-              <Tooltip title={`${record.vehicle.make} ${record.vehicle.model} (${record.vehicle.year})`}>
+              <Tooltip title={`${vehicleData?.make} ${vehicleData?.model} (${vehicleData?.year})`}>
                 <div className="flex items-center">
                   <CarOutlined className="text-green-600 mr-2" />
                   <div>
                     <div className="font-medium text-sm">
-                      {record.vehicle.make} {record.vehicle.model}
+                      {vehicleData?.make} {vehicleData?.model}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {record.vehicle.licensePlate}
+                      {vehicleData?.licensePlate}
                     </div>
                   </div>
                 </div>
@@ -689,9 +704,12 @@ const DriverList: React.FC = () => {
               size="large"
               showSearch
               optionFilterProp="children"
-              filterOption={(input, option) =>
-                (option?.children as string)?.toLowerCase().includes(input.toLowerCase())
-              }
+              filterOption={(input, option) => {
+                const label = typeof option?.children === 'string' 
+                  ? option.children 
+                  : String(option?.children || '');
+                return label.toLowerCase().includes(input.toLowerCase());
+              }}
             >
               {availableVehicles.map(vehicle => (
                 <Option key={vehicle._id} value={vehicle._id}>

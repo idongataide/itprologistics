@@ -17,15 +17,15 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import AdminRides from '../rides/AdminRides';
-import { getAllRides, Ride as RideType, Driver as DriverType } from '../../../../services/admin/adminRideService';
+import { getAllRides, Ride as RideType  } from '../../../../services/admin/adminRideService';
 import driverService from '../../../../services/admin/driverService';
 import userService, { User } from '../../../../services/admin/userService';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface AdminStat {
   title: string;
-  value: number | string;
+  value: number | string ;
   icon: React.ReactNode;
   color: string;
   prefix?: string;
@@ -35,7 +35,7 @@ interface AdminStat {
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [allRides, setAllRides] = useState<RideType[]>([]);
-  const [drivers, setDrivers] = useState<DriverType[]>([]);
+  const [drivers, setDrivers] = useState<number>(0);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,8 +56,7 @@ const AdminDashboard: React.FC = () => {
         // Fetch drivers
         const driversResponse = await driverService.getDrivers();
         if (driversResponse.success && driversResponse.drivers) {
-          console.log('Fetched drivers:', driversResponse);
-          setDrivers(driversResponse?.stats?.activeDrivers || []);
+          setDrivers(driversResponse?.stats?.activeDrivers || 0);
         } else {
           message.error('Failed to fetch drivers');
         }
@@ -105,6 +104,13 @@ const AdminDashboard: React.FC = () => {
     {
       title: 'Pending Rides',
       value: allRides.filter(r => r.status === 'pending').length,
+      icon: <ClockCircleOutlined />,
+      color: '#1890FF',
+      suffix: ' pending',
+    },
+    {
+      title: 'Awaiting Confirmation',
+      value: allRides.filter(r => r.status === 'awaiting_driver_confirmation').length,
       icon: <ClockCircleOutlined />,
       color: '#1890FF',
       suffix: ' pending',

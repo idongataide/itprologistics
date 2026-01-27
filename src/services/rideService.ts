@@ -33,6 +33,8 @@ export interface RideEstimate {
 }
 
 export interface Ride {
+  notes: any;
+  duration: number;
   _id: string;
   userId: string | { fullname: string; phone: string };
   driverId?: string;

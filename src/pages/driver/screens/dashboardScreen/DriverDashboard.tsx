@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Button, Table, Tag, Space, Modal, message, Spin } from 'antd';
+import { Card, Row, Col, Typography, Button, Table, Tag, Space, Modal, message, Spin, Descriptions } from 'antd';
 import {
   CarOutlined,
   CheckCircleOutlined,
@@ -10,10 +10,13 @@ import {
   LoadingOutlined,
   WarningOutlined,
   HistoryOutlined,
+  UserOutlined,
+  EnvironmentOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useOnboardingStore } from '@/global/store';
-import { getDriverRides, acceptRide, declineRide, Ride as RideType } from '../../../../services/rideService';
+import { getDriverRides, acceptRide, Ride as RideType } from '../../../../services/rideService';
 
 
 const { Text } = Typography;
@@ -37,11 +40,15 @@ interface Ride {
   status: RideStatus;
   fare: number;
   rider: string; // Driver will see rider's name
+  notes?: string;
+  duration?: number; // Estimated duration in minutes (optional)
 }
 
 const DriverDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [isDeclineModalVisible, setIsDeclineModalVisible] = useState(false);
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
+  const [selectedRide, setSelectedRide] = useState<RideType | null>(null);
   const [rideToDecline, setRideToDecline] = useState<Ride | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -184,6 +191,11 @@ const DriverDashboard: React.FC = () => {
     setIsDeclineModalVisible(true);
   };
 
+  const handleViewRide = (ride: RideType) => {
+    setSelectedRide(ride);
+    setIsViewModalVisible(true);
+  };
+
   const confirmDeclineRide = () => {
     if (!rideToDecline) return;
 
@@ -267,6 +279,14 @@ const DriverDashboard: React.FC = () => {
           >
             Decline
           </Button>
+          <Button
+            type="text"
+            icon={<EyeOutlined />}
+            className="text-[#1890FF] hover:text-[#1890FF]/80"
+            onClick={() => handleViewRide(record)}
+          >
+            View
+          </Button>
         </Space>
       )
     }
@@ -331,14 +351,23 @@ const DriverDashboard: React.FC = () => {
             type="text"
             icon={<EyeOutlined />}
             className="text-[#1890FF] hover:text-[#1890FF]/80"
-            onClick={() => navigate(`/driver-dashboard/rides/${record._id}`)}
+            onClick={() => handleViewRide(record)}
           >
-            View
-          </Button>
+            View Details
+          </Button>          
         </Space>
       )
     }
   ];
+
+  // Function to format date
+  const formatDate = (dateString: Date) => {
+    const date = new Date(dateString);
+    return {
+      date: date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4">
@@ -409,7 +438,7 @@ const DriverDashboard: React.FC = () => {
             dataSource={driverRides.filter(ride => ride.status === 'awaiting_driver_confirmation')}
             columns={pendingRidesColumns}
             pagination={{ pageSize: 5 }}
-            rowKey="id"
+            rowKey="_id"
             className="mt-4"
           />
         </Card>
@@ -425,13 +454,143 @@ const DriverDashboard: React.FC = () => {
             dataSource={driverRides.filter(ride => ['accepted', 'in_progress', 'picked_up', 'completed'].includes(ride.status))}
             columns={activeAndCompletedRidesColumns}
             pagination={{ pageSize: 5 }}
-            rowKey="id"
+            rowKey="_id"
             className="mt-4"
           />
         </Card>
          </>
         )}
       </div>
+
+      {/* View Ride Details Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <EyeOutlined className="text-blue-500" />
+            <span>Ride Details</span>
+          </div>
+        }
+        open={isViewModalVisible}
+        onCancel={() => setIsViewModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setIsViewModalVisible(false)}>
+            Close
+          </Button>,
+          <Button
+            key="full"
+            type="primary"
+            onClick={() => {
+              if (selectedRide) {
+                navigate(`/driver-dashboard/rides/${selectedRide._id}`);
+              }
+            }}
+          >
+            View Full Details
+          </Button>,
+        ]}
+        width={700}
+      >
+        {selectedRide && (
+          <div className="py-4">
+            <Descriptions bordered column={2}>
+              <Descriptions.Item label="Ride ID" span={2}>
+                <Text strong>{selectedRide._id}</Text>
+              </Descriptions.Item>
+              
+              <Descriptions.Item label="Status" span={2}>
+                {getStatusTag(selectedRide.status)}
+              </Descriptions.Item>
+              
+              <Descriptions.Item label="Rider">
+                <div className="flex items-center gap-2">
+                  <UserOutlined />
+                  <Text>
+                    {typeof selectedRide.userId === 'object' 
+                      ? selectedRide.userId.fullname 
+                      : 'N/A'}
+                  </Text>
+                </div>
+              </Descriptions.Item>
+              
+              <Descriptions.Item label="Created Date">
+                <div className="flex items-center gap-2">
+                  <CalendarOutlined />
+                  <Text>{formatDate(selectedRide.createdAt).date}</Text>
+                </div>
+              </Descriptions.Item>
+              
+              <Descriptions.Item label="Created Time">
+                <div className="flex items-center gap-2">
+                  <ClockCircleOutlined />
+                  <Text>{formatDate(selectedRide.createdAt).time}</Text>
+                </div>
+              </Descriptions.Item>
+              
+              <Descriptions.Item label="Total Fare">
+                <Text strong className="text-lg">N{selectedRide.totalFare.toFixed(2)}</Text>
+              </Descriptions.Item>
+              
+              <Descriptions.Item label="Pickup Location" span={2}>
+                <div className="flex items-start gap-2">
+                  <EnvironmentOutlined className="text-green-500 mt-1" />
+                  <div>
+                    <Text strong>{selectedRide.pickupLocation.address}</Text>
+                    {(selectedRide.pickupLocation as any).landmark && (
+                      <div>
+                        <Text type="secondary" className="text-sm">
+                          Landmark: {(selectedRide.pickupLocation as any).landmark}
+                        </Text>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Descriptions.Item>
+              
+              <Descriptions.Item label="Destination" span={2}>
+                <div className="flex items-start gap-2">
+                  <EnvironmentOutlined className="text-red-500 mt-1" />
+                  <div>
+                    <Text strong>{selectedRide.destination.address}</Text>
+                    {(selectedRide.destination as any).landmark && (
+                      <div>
+                        <Text type="secondary" className="text-sm">
+                          Landmark: {(selectedRide.destination as any).landmark}
+                        </Text>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Descriptions.Item>
+              
+              {selectedRide.distance && (
+                <Descriptions.Item label="Distance">
+                  <Text>{selectedRide.distance} km</Text>
+                </Descriptions.Item>
+              )}
+              
+              {selectedRide.duration && (
+                <Descriptions.Item label="Estimated Duration">
+                  <Text>{selectedRide.duration} mins</Text>
+                </Descriptions.Item>
+              )}
+              
+              {selectedRide.paymentMethod && (
+                <Descriptions.Item label="Payment Method">
+                  <Tag color="blue">{selectedRide.paymentMethod}</Tag>
+                </Descriptions.Item>
+              )}
+              
+              {selectedRide.notes && (
+                <Descriptions.Item label="Special Instructions" span={2}>
+                  <div className="p-2 bg-gray-50 rounded border">
+                    <Text>{selectedRide.notes}</Text>
+                  </div>
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+          </div>
+        )}
+      </Modal>
 
       {/* Decline Ride Modal */}
       <Modal
