@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://resq-admin.onrender.com/api/:path*"
+    },
+    {
+      "source": "/wallet/:path*",
+      "destination": "https://resq-wallet.onrender.com/wallet/:path*"
+    },
+    {
+      "source": "/maps/:path*",
+      "destination": "https://maps.googleapis.com/maps/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
+} 

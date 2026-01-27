@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('./assets/fonts/Satoshi-Variable.woff2') format('woff2'),
+       url('./assets/fonts/Satoshi-Variable.woff') format('woff');
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('./assets/fonts/Satoshi-Regular.woff2') format('woff2'),
+       url('./assets/fonts/Satoshi-Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('./assets/fonts/Satoshi-Medium.woff2') format('woff2'),
+       url('./assets/fonts/Satoshi-Medium.woff') format('woff');
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('./assets/fonts/Satoshi-Bold.woff2') format('woff2'),
+       url('./assets/fonts/Satoshi-Bold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+:root {
+  font-family: 'Satoshi', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.4rem !important;
+}
+
+* {
+  font-family: 'Satoshi', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: 'Satoshi', sans-serif;
+}
+
+.ant-form-item-label >label.ant-form-item-required::before {
+  display: none !important;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+}
+
+
+.scrollbar-hide {
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; 
+}
+
+.scrollbar-show {
+  scrollbar-width: thin;
+  scrollbar-color: #D6DADD #F8F9FA;
+}
+
+.scrollbar-show::-webkit-scrollbar {
+  display: block;
+  width: 6px;
+}
+
+.scrollbar-show::-webkit-scrollbar-track {
+  background: #F8F9FA;
+  border-radius: 3px;
+}
+
+.scrollbar-show::-webkit-scrollbar-thumb {
+  background-color: #D6DADD;
+  border-radius: 3px;
+}
+
+.ant-form-item-label >label {
+  color: #475467 !important;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  -webkit-text-fill-color: #000 !important;
+  caret-color: #000 !important;
+}
+
+.ant-form-item{
+  margin-bottom: 15px !important;
+}
+
+input:-internal-autofill-selected {
+  background-color: #fff !important;
+  color: #000 !important;
+}
+
+/* Additional Ant Design overrides */
+.ant-btn {
+  font-family: 'Satoshi', sans-serif !important;
+}
+
+.ant-input {
+  font-family: 'Satoshi', sans-serif !important;
+}
+
+.ant-select {
+  font-family: 'Satoshi', sans-serif !important;
+}
+
+.ant-input{
+   height: 42px !important;
+}
+
+.ant-select-arrow{
+  color: #667085 !important;
+  font-weight: 600;
+}
+
+.ant-modal-content {
+  font-family: 'Satoshi', sans-serif !important;
+}
+
+.bg-image{
+  background-image: url('../images/vectors.svg');
+  background-size: cover;
+  background-repeat:no-repeat;
+}
+
+.fixed.inset-0{
+  z-index: 9900 !important;
+}
+
+
+
+.slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.ant-table-tbody .ant-typography {
+  font-family: Satoshi, sans-serif;
+  font-size: 14px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+.ant-table-tbody{
+  overflow: scroll;
+}
+
+h2.ant-typography{
+  font-size: 20px;
+}
+
+.ant-form-item-label{
+  padding: 0 0 3px !important;
+}
+
+.ant-table-content{
+  overflow-x: scroll;
+}
