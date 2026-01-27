@@ -26,7 +26,7 @@ import adminRideService from '@/services/admin/adminRideService';
 
 const { Title, Text } = Typography;
 
-type RideStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+type RideStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'awaiting_driver_confirmation';
 
 interface Ride {
   _id: string;
@@ -60,6 +60,7 @@ interface Driver {
     model: string;
     licensePlate: string;
     color: string;
+    vehicleType?: string;
   };
   phone?: string;
   rating?: number;
