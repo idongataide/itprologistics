@@ -45,7 +45,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { Search } = Input;
 
-interface DriverWithIncompleteDetails extends Omit<DriverDetail, '_id'> {
+interface DriverWithIncompleteDetails extends Omit<DriverDetail, 'userId'> {
   _id: string;
   userId: string;
   hasDriverDetails: boolean;
@@ -127,10 +127,10 @@ const DriverList: React.FC = () => {
 
   const handleStatusChange = async (driverId: string, newStatus: 'active' | 'suspended') => {
     try {
-      const driver = drivers.find(d => d._id === driverId || d.userId._id === driverId);
+      const driver = drivers.find(d => d._id === driverId || d.userId === driverId);
       if (!driver) return;
 
-      const idToUse = driver.hasDriverDetails ? driver._id : driver.userId._id;
+      const idToUse = driver.hasDriverDetails ? driver._id : driver.userId;
       
       const data = await driverService.updateDriverStatus(idToUse, newStatus);
       if (data.success) {
@@ -145,7 +145,7 @@ const DriverList: React.FC = () => {
 
   const handleDeleteDriver = async (driverId: string) => {
     try {
-      const driver = drivers.find(d => d._id === driverId || d.userId._id === driverId);
+      const driver = drivers.find(d => d._id === driverId || d.userId === driverId);
       if (!driver) return;
 
       const idToUse = driver.hasDriverDetails ? driver._id : driver._id;    
@@ -658,9 +658,9 @@ const DriverList: React.FC = () => {
             columns={columns}
             dataSource={filteredDrivers.map(driver => ({
               ...driver,
-              key: driver._id || driver.userId._id,
+              key: driver._id || driver.userId,
             }))}
-            rowKey={record => record._id || record.userId._id}
+            rowKey={record => record._id || record.userId}
             loading={loading}
             pagination={{
               pageSize: 10,
@@ -747,7 +747,24 @@ const DriverList: React.FC = () => {
 
         {/* Driver Details Modal */}
         <DriverDetailsModal
-          selectedDriver={selectedDriver}
+          selectedDriver={
+            selectedDriver
+              ? {
+                  ...selectedDriver,
+                  userId: typeof selectedDriver.userId === 'string'
+                    ? {
+                        _id: selectedDriver.userId,
+                        name: selectedDriver.name,
+                        email: selectedDriver.email,
+                        phone: selectedDriver.phone,
+                        // Provide default or fallback values for missing fields
+                        role: (selectedDriver as any).role || 'driver',
+                        status: (selectedDriver as any).status || 'active'
+                      }
+                    : selectedDriver.userId
+                }
+              : null
+          }
           visible={viewModalVisible}
           onClose={() => setViewModalVisible(false)}
         />

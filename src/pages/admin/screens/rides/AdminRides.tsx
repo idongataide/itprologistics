@@ -114,6 +114,7 @@ const AdminRides: React.FC = () => {
       pending: { color: 'orange', text: 'Pending', icon: <ClockCircleOutlined /> },
       accepted: { color: 'blue', text: 'Accepted', icon: <CheckCircleOutlined /> },
       in_progress: { color: 'cyan', text: 'In Progress', icon: <ClockCircleOutlined /> },
+      awaiting_driver_confirmation: { color: 'cyan', text: 'Awating Confirmation', icon: <ClockCircleOutlined /> },
       picked_up: { color: 'cyan', text: 'Picked Up', icon: <ClockCircleOutlined /> },
       completed: { color: 'green', text: 'Completed', icon: <CheckCircleOutlined /> },
       cancelled: { color: 'red', text: 'Cancelled', icon: <ExclamationCircleOutlined /> },
@@ -189,24 +190,9 @@ const AdminRides: React.FC = () => {
       const response = await adminRideService.assignDriverToRide(rideToAction._id, driverId);
 
       if (response.success) {
-        // Update local state
-        const driverName = drivers.find(d => d._id === driverId)?.name;
-        setAllRides(prevRides =>
-          prevRides.map(r =>
-            r._id === rideToAction._id
-              ? { ...r, status: 'accepted', driverId, driverName }
-              : r
-          )
-        );
-
-        // Update driver status
-        setDrivers(prevDrivers =>
-          prevDrivers.map(d =>
-            d._id === driverId ? { ...d, status: 'on_ride' } : d
-          )
-        );
-
-        toast.success(`Ride assigned to ${driverName} successfully!`);
+        // Refresh rides and drivers from server instead of updating local state
+        await fetchRidesAndDrivers();
+        toast.success('Ride assigned successfully!');
         setIsAssignModalVisible(false);
         setRideToAction(null);
       } else {
@@ -398,21 +384,28 @@ const AdminRides: React.FC = () => {
       render: (_: any, record: Ride) => {
         const isAssignable = record.status === 'pending';
         const isPickupable = record.status === 'accepted';
+        const isWaiting = record.status === 'awaiting_driver_confirmation';
         const isCompletableDeclinable = ['in_progress', 'picked_up'].includes(record.status);
 
         return (
           <Space wrap>
-            {isAssignable && (
+          
+            {(isAssignable || isWaiting) && (
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 size="small"
-                className="bg-green-500 hover:bg-green-600 border-0"
+                className={
+                  isAssignable
+                    ? "bg-green-500 hover:bg-green-600 border-0"
+                    : "bg-yellow-500 hover:bg-yellow-600 border-0"
+                }
                 onClick={() => handleAssignRide(record)}
               >
-                Assign
+                {isAssignable ? "Assign" : "Reassign"}
               </Button>
             )}
+
             {isPickupable && (
               <>
                 <Button
@@ -456,7 +449,7 @@ const AdminRides: React.FC = () => {
                 </Button>
               </>
             )}
-            {!isAssignable && !isPickupable && !isCompletableDeclinable && (
+            {!isAssignable && !isWaiting && !isPickupable && !isCompletableDeclinable && (
               <Text type="secondary" className="text-xs">Not actionable</Text>
             )}
           </Space>
@@ -595,7 +588,7 @@ const AdminRides: React.FC = () => {
             <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <Text strong className="block mb-2">Ride Details:</Text>
               <Text className="text-sm">
-                Type: <span className="capitalize font-semibold">{rideToAction.rideType}</span>
+                Vehicle Type: <span className="capitalize font-semibold">{rideToAction.rideType}</span>
               </Text>
             </div>
             
@@ -688,6 +681,7 @@ const AdminRides: React.FC = () => {
                     <Button 
                       type="primary" 
                       size="small"
+                      loading={actionLoading}
                       onClick={(e) => {
                         e.stopPropagation();
                         confirmAssignRide(record._id);
