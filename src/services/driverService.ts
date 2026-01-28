@@ -36,28 +36,7 @@ export const getDriverProfile = async (): Promise<{ success: boolean; data?: Dri
   }
 };
 
-export const changeDriverPassword = async (data: {
-  old_password: string;
-  new_password: string;
-}) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/driver/change-password`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    throw error;
-  }
-};
 
 export default {
   getDriverProfile,
-  changeDriverPassword,
 };
