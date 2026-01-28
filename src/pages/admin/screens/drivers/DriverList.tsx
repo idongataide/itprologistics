@@ -757,7 +757,6 @@ const DriverList: React.FC = () => {
                         name: selectedDriver.name,
                         email: selectedDriver.email,
                         phone: selectedDriver.phone,
-                        // Provide default or fallback values for missing fields
                         role: (selectedDriver as any).role || 'driver',
                         status: (selectedDriver as any).status || 'active'
                       }
