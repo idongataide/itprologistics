@@ -57,6 +57,7 @@ interface DriverWithIncompleteDetails extends Omit<DriverDetail, '_id'> {
     model: string;
     year: number;
     licensePlate: string;
+    vehicleType: string;
   };
 }
 
@@ -324,10 +325,10 @@ const DriverList: React.FC = () => {
                   <CarOutlined className="text-green-600 mr-2" />
                   <div>
                     <div className="font-medium text-sm">
-                      {vehicleData?.make} {vehicleData?.model}
+                      {vehicleData?.make}-{vehicleData?.model}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {vehicleData?.licensePlate}
+                      {vehicleData?.licensePlate} - {vehicleData?.vehicleType}
                     </div>
                   </div>
                 </div>
