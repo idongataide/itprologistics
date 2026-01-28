@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log('MongoDB connected successfully'))
 .catch(err => {
   console.error('MongoDB connection error:', err.message);
-  process.exit(1); // Exit process if DB connection fails
+  process.exit(1); 
 });
 
 // Routes
@@ -44,13 +44,12 @@ app.get('/', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
-// In your app.js - FIX THE ERROR HANDLER
-// Error handling middleware (MUST have 4 parameters)
+
+
 app.use((err, req, res, next) => {  // Add 'next' as 4th parameter
   console.error('Global error handler:', err.message);
   console.error('Error stack:', err.stack);
   
-  // Don't send response if headers already sent
   if (res.headersSent) {
     return next(err);
   }

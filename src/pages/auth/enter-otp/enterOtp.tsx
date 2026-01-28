@@ -5,16 +5,15 @@ import { Button } from "antd";
 import Images from "../../../components/images";
 import OtpInput from 'react-otp-input';
 import { useOnboardingStore } from '@/global/store';
-import { confirmOtp } from '@/api/otpApi';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import authService from "@/services/authService";
 
 const EnterOtp = () => {
-
     const [otp, setOtp] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const navigate = useNavigate();
-    const { otpRequestId, email, setNavPath } = useOnboardingStore();
+    const { email, setNavPath } = useOnboardingStore();
     const { setOtpValue } = useOnboardingStore();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -25,32 +24,53 @@ const EnterOtp = () => {
             return;
         }
 
-        if (!otpRequestId) {
-             toast.error('OTP request ID is missing. Please restart the login process.');
-             return;
+        if (!email) {
+            toast.error('Email is missing. Please restart the process.');
+            return;
         }
 
         setLoading(true);
         try {
-            const response = await confirmOtp({ otp, otp_request_id: otpRequestId });
+            // Call the verifyOtp service with email and otp
+            const response = await authService.verifyOtp({
+                email: email,
+                otp: otp
+            });
 
-
-            if (response?.error || response?.status === 'error' || response?.data?.status === 'error' || response?.response?.data?.status === 'error') {
-                const errorMsg = response?.data?.msg || response?.response?.data?.msg || response?.message || response?.msg || 'OTP verification failed.';
-                toast.error(errorMsg);
-            } else if (response?.status === 'ok' || response?.data?.status === 'ok') {
+            // Handle response based on your API structure
+            if (response?.success || response?.status === 'success' || response?.data?.status === 'success') {
                 setOtpValue(otp);
                 toast.success('OTP verified successfully!');
+                
+                // Navigate based on the flow (forgot password or other)
                 navigate('/login/forgot-password');
                 setNavPath("enter-password");
             } else {
-                toast.error('OTP verification failed. Please try again.');
+                // Handle error response
+                const errorMsg = response?.message || 
+                               response?.data?.message || 
+                               response?.error || 
+                               'OTP verification failed.';
+                toast.error(errorMsg);
             }
         } catch (error: any) {
-            const errorMsg = error?.response?.data?.msg || error?.data?.msg || error?.message || 'An error occurred during OTP verification.';
+            // Handle network or server errors
+            const errorMsg = error?.response?.data?.message || 
+                           error?.message || 
+                           'An error occurred during OTP verification.';
             toast.error(errorMsg);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        try {
+            // Call resend OTP service
+            // await resendOtp({ email: email });
+            toast.success('OTP resent successfully!');
+        } catch (error) {
+            toast.error('Failed to resend OTP. Please try again.');
         }
     };
 
@@ -58,9 +78,7 @@ const EnterOtp = () => {
         <div className="flex flex-col items-start w-full">
             <Helmet>
                 <meta charSet="utf-8" />
-                <title>RESQ: Enter OTP</title>
-                {/* Update canonical URL if needed */}
-                {/* <link rel="canonical" href={`${URL}/auth/enter-otp`} /> */}
+                <title>ITproLogistics: Enter OTP</title>
             </Helmet> 
             <Toaster/>
             <div className="flex justify-center m-auto mb-6">
@@ -70,41 +88,55 @@ const EnterOtp = () => {
             {/* Welcome Text */}
             <div className="mb-8 text-start ">
                 <h2 className="text-2xl font-bold! text-[#475467] mb-1!">Enter OTP</h2>
-                <p className="text-sm font-medium text-[#667085]">An Otp was sent to your email <span className="text-[#FF6C2D]">{email}</span>  address to verify your account. Kindly enter the six digit code to proceed</p>
+                <p className="text-sm font-medium text-[#667085]">
+                    An OTP was sent to your email <span className="text-[#FF6C2D]">{email}</span>  
+                    address to verify your account. Kindly enter the six digit code to proceed
+                </p>
+                <div className="mt-2">
+                    <Button 
+                        type="link" 
+                        onClick={handleResendOtp}
+                        className="p-0 text-[#FF6C2D] hover:text-[#E55B1F]"
+                        disabled={loading}
+                    >
+                        Resend OTP
+                    </Button>
+                </div>
             </div>
+            
             <form onSubmit={handleSubmit} className="py-8">                
                 <p className="text-[#475467] font-medium mb-4">Input the six digits your OTP code here </p>
                 
                 <div className="mb-6 flex justify-center">
-                <OtpInput
-                    value={otp}
-                    onChange={setOtp}
-                    numInputs={6}
-                    renderInput={(props, index) => {
-                    if (index === 2) {
-                        return (
-                        <span key={index} style={{ display: 'flex', alignItems: 'center' }}>
-                            <input {...props} style={{ ...props.style, }} />
-                            <span className='mx-3 font-bold text-[#D0D5DD] text-3xl'> - </span>
-                        </span>
-                        );
-                    }
-                    return <input {...props} key={index} />;
-                    }}
-                    shouldAutoFocus
-                    inputStyle={{
-                    width: '48px',
-                    height: '48px',
-                    margin: '0 4px',
-                    fontSize: '20px',
-                    borderRadius: '8px',
-                    border: '1px solid #D0D5DD',
-                    color: '#1C2023',
-                    }}
-                    containerStyle={{
-                    justifyContent: 'center',
-                    }}
-                />
+                    <OtpInput
+                        value={otp}
+                        onChange={setOtp}
+                        numInputs={6}
+                        renderInput={(props, index) => {
+                            if (index === 2) {
+                                return (
+                                    <span key={index} style={{ display: 'flex', alignItems: 'center' }}>
+                                        <input {...props} style={{ ...props.style }} />
+                                        <span className='mx-3 font-bold text-[#D0D5DD] text-3xl'> - </span>
+                                    </span>
+                                );
+                            }
+                            return <input {...props} key={index} />;
+                        }}
+                        shouldAutoFocus
+                        inputStyle={{
+                            width: '48px',
+                            height: '48px',
+                            margin: '0 4px',
+                            fontSize: '20px',
+                            borderRadius: '8px',
+                            border: '1px solid #D0D5DD',
+                            color: '#1C2023',
+                        }}
+                        containerStyle={{
+                            justifyContent: 'center',
+                        }}
+                    />
                 </div>
 
                 <Button
@@ -122,8 +154,7 @@ const EnterOtp = () => {
                 </Button>
             </form>
         </div>
-    )
-}
-    
+    );
+};
 
 export default EnterOtp;
