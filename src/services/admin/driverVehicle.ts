@@ -15,6 +15,7 @@ export interface SingleDriverResponse {
   success: boolean;
   message: string;
   driver?: any;
+  userId?: any;
 }
 
 export interface DriverVehicleResponse {

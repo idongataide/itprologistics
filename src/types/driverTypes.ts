@@ -9,6 +9,7 @@ export interface UserInfo {
   
   export interface VehicleInfo {
     _id: string;
+    userId: string;
     make: string;
     model: string;
     year: number;

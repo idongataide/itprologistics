@@ -47,6 +47,7 @@ const { Search } = Input;
 
 interface DriverWithIncompleteDetails extends Omit<DriverDetail, '_id'> {
   _id: string;
+  userId: string;
   hasDriverDetails: boolean;
   name: string;
   email: string;
@@ -217,7 +218,7 @@ const DriverList: React.FC = () => {
   const handleUnassignConfirm = async (driver: DriverWithIncompleteDetails) => {
     
     try {
-      const data = await driverVehicleService.unassignVehicleFromDriver(driver._id);
+      const data = await driverVehicleService.unassignVehicleFromDriver(driver.userId);
       if (data.success) {
         toast.success('Vehicle unassigned successfully');
         fetchDrivers();
