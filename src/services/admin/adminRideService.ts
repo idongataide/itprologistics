@@ -201,6 +201,30 @@ export const getAllDrivers = async (): Promise<ApiResponse> => {
   }
 };
 
+// Update ride status
+export const updateRideStatus = async (rideId: string, status: string): Promise<ApiResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/admin/rides/${rideId}/status`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update ride status: ${response.statusText}`);
+    }
+
+    const data: ApiResponse = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error updating ride status:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to update ride status',
+    };
+  }
+};
+
 export default {
   getAllRides,
   assignDriverToRide,
@@ -208,4 +232,5 @@ export default {
   declineRide,
   getAvailableDrivers,
   getAllDrivers,
+  updateRideStatus,
 };

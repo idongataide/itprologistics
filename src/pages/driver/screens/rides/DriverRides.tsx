@@ -33,6 +33,8 @@ const DriverRides: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [driverRides, setDriverRides] = useState<RideType[]>([]);
 
+  console.log(loading)
+
   // Fetch driver rides from backend
   useEffect(() => {
     const fetchDriverRides = async () => {

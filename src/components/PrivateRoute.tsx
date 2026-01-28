@@ -7,7 +7,14 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ allowedRoles }) => {
-  const { user, loading } = useContext(AuthContext);
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    // Context not available, handle as unauthenticated
+    return <Navigate to="/login" replace />;
+  }
+
+  const { user, loading } = context;
 
   if (loading) {
     return <div>Loading authentication...</div>; // Or a loading spinner

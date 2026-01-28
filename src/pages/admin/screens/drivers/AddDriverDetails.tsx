@@ -5,7 +5,6 @@ import {
   Form,
   Input,
   Button,
-  message,
   Row,
   Col,
   Spin,
@@ -89,7 +88,7 @@ const AddDriverDetails: React.FC = () => {
           street: values.street,
           city: values.city,
           state: values.state,
-          zipCode: values.zipCode,
+          postalCode: values.zipCode,
           country: values.country
         }
       };

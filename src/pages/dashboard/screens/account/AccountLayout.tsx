@@ -8,8 +8,6 @@ const AccountLayout: React.FC = () => {
   const navLinks = [
     { name: 'Personal details', path: '/account' }, 
     { name: 'Change Password', path: '/account/change-password' },
-    { name: 'Support', path: '/account/support' },
-    { name: 'Delete Account', path: '/account/delete-account' },
   ];
 
   return (

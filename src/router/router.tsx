@@ -6,8 +6,6 @@ import AuthPath from "../pages/auth/authPath";
 import LoadingScreen from "../pages/dashboard/common/LoadingScreen";
 import DashboardLayout from "../layouts/dashboardLayout";
 import ProtectedRoute from "../components/ProtectedRoute";
-import DeleteAccount from "@/pages/dashboard/screens/account/DeleteAccount";
-import AccountSupport from "@/pages/dashboard/screens/account/Support";
 import UserDashboard from "@/pages/dashboard/screens/dashboardScreen/UserDashboard";
 import OrderRide from "@/pages/dashboard/screens/rides/OrderRides";
 import RideOrders from "@/pages/dashboard/screens/rides/Rides";
@@ -27,7 +25,6 @@ import VehicleList from "@/pages/admin/screens/vehicles/vehicleList";
 const AccountLayout = lazy(() => import("@/pages/dashboard/screens/account/AccountLayout"));
 const Profile = lazy(() => import("@/pages/dashboard/screens/account/Profile"));
 const ChangePassword = lazy(() => import("@/pages/dashboard/screens/account/ChangePassword"));
-const Passcode = lazy(() => import("@/pages/dashboard/screens/account/Passcode"));
 
 export const routes = createBrowserRouter([
   // Admin routes with AdminLayout (Ant Design sidebar)
@@ -116,10 +113,7 @@ export const routes = createBrowserRouter([
         ),
         children: [
           { index: true, element: <Profile /> },
-          { path: 'change-password', element: <ChangePassword /> },
-          { path: 'delete-account', element: <DeleteAccount /> },
-          { path: 'support', element: <AccountSupport /> },
-          { path: 'passcode', element: <Passcode /> },
+          { path: 'change-password', element: <ChangePassword /> },        
         ],
       },
       

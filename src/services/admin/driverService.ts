@@ -75,7 +75,6 @@ export interface CreateDriverAccountData {
 export interface CreateDriverDetailsData {
   userId: string;
   licenseNumber: string;
-  licenseExpiry: string;
   address: {
     street: string;
     city: string;

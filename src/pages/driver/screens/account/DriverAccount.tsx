@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Tag, Divider } from 'antd';
+import { Card, Tag, Divider } from 'antd';
 import {
   UserOutlined,
   CarOutlined,

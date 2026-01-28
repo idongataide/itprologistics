@@ -371,6 +371,99 @@ router.get('/admin/drivers/available/:rideId', auth, isAdmin, async (req, res) =
   }
 });
 
+// @route   PATCH /api/admin/rides/:rideId/status
+// @desc    Update ride status
+// @access  Private (Admin only)
+router.patch('/admin/rides/:rideId/status', auth, isAdmin, async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status is required'
+      });
+    }
+
+    // Valid status transitions
+    const validStatuses = ['pending', 'searching', 'awaiting_driver_confirmation', 'accepted', 'picked_up', 'in_progress', 'completed', 'cancelled'];
+    
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status'
+      });
+    }
+
+    // Find the ride
+    const ride = await Ride.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ride not found'
+      });
+    }
+
+    // Update status with appropriate timestamps
+    ride.status = status;
+
+    if (status === 'picked_up') {
+      ride.pickedUpAt = new Date();
+    } else if (status === 'in_progress') {
+      ride.startedAt = new Date();
+    } else if (status === 'completed') {
+      ride.completedAt = new Date();
+      ride.paymentStatus = 'pending';
+    }
+
+    await ride.save();
+
+    // Populate the updated ride for response
+    let driverInfo = null;
+    if (ride.driverId) {
+      driverInfo = await DriverDetail.findById(ride.driverId)
+        .populate('userId', 'fullname phone');
+      
+      if (!driverInfo) {
+        driverInfo = await DriverDetail.findOne({ userId: ride.driverId })
+          .populate('userId', 'fullname phone');
+      }
+    }
+
+    const userInfo = await User.findById(ride.userId);
+
+    res.json({
+      success: true,
+      message: `Ride status updated to ${status}`,
+      ride: {
+        _id: ride._id,
+        userId: ride.userId,
+        userName: userInfo?.fullname || 'N/A',
+        phoneNumber: userInfo?.phone || 'N/A',
+        driverId: driverInfo?._id,
+        driverName: driverInfo?.userId?.fullname || 'Unassigned',
+        pickupLocation: ride.pickupLocation,
+        destination: ride.destination,
+        status: ride.status,
+        rideType: ride.rideType,
+        totalFare: ride.totalFare,
+        distance: ride.distance,
+        estimatedDuration: ride.estimatedDuration,
+        createdAt: ride.createdAt,
+        updatedAt: ride.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error updating ride status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update ride status',
+      error: error.message
+    });
+  }
+});
+
 // @route   GET /api/admin/drivers
 // @desc    Get all drivers (for assignment)
 // @access  Private (Admin only)

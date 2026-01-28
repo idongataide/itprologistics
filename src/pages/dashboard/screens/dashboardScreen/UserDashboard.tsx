@@ -10,7 +10,6 @@ import {
   Space,
   Tabs,
   Modal,
-  message,
   Spin,
 } from 'antd';
 import {
@@ -41,7 +40,28 @@ interface UserStat {
   suffix?: string;
 }
 
-type RideStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+type RideStatus = 'pending' | 'accepted' | 'picked_up' | 'in_progress' | 'completed' | 'cancelled' | 'awaiting_driver_confirmation' | 'searching' | 'arrived';
+
+
+interface DriverInfo {
+  _id: string;
+  userId: {
+    phone: string;
+    // add other user properties if needed
+  };
+  driverRating: number;
+  licenseNumber: string;
+  status: string;
+  totalEarnings: number;
+  totalTrips: number;
+  address?: {
+    street?: string;
+    city?: string;
+  };
+  vehicleId?: string | { _id: string };
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 interface Ride {
   _id: string;
@@ -58,15 +78,32 @@ interface Ride {
   createdAt: string;
   rideType: 'bicycle' | 'motorcycle' | 'car';
   estimatedDuration?: number;
+  driverId?: DriverInfo;
+  acceptedAt?: string;
+  pickedUpAt?: string;
+  startedAt?: string;
+  arrivedAt?: string;
+  completedAt?: string;
+  cancelledAt?: string;
+  instructions?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  baseFare?: number;
+  distanceFare?: number;
+  distance?: number;
+  vehicleId?: string | { _id: string };
 }
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('active');
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [rideToCancel, setRideToCancel] = useState<Ride | null>(null);
+  const [selectedRide, setSelectedRide] = useState<Ride | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [updatingRide, setUpdatingRide] = useState<string | null>(null);
   const [allRides, setAllRides] = useState<Ride[]>([]);
   const { userName } = useOnboardingStore();
 
@@ -80,7 +117,12 @@ const UserDashboard: React.FC = () => {
     try {
       const response = await rideService.getUserRides();
       if (response?.success && Array.isArray(response.rides)) {
-        setAllRides(response.rides);
+        // Convert createdAt to string if it's a Date object
+        const ridesWithStringDates = response.rides.map((ride: any) => ({
+          ...ride,
+          createdAt: typeof ride.createdAt === 'string' ? ride.createdAt : ride.createdAt?.toISOString?.() || '',
+        }));
+        setAllRides(ridesWithStringDates);
       } else {
         toast.error('Failed to fetch rides');
         setAllRides([]);
@@ -145,6 +187,11 @@ const UserDashboard: React.FC = () => {
         text: 'In Progress',
         icon: <LoadingOutlined />
       },
+      picked_up: { 
+        color: 'cyan', 
+        text: 'Picked Up',
+        icon: <CarOutlined />
+      },
       completed: { 
         color: 'green', 
         text: 'Completed',
@@ -154,6 +201,21 @@ const UserDashboard: React.FC = () => {
         color: 'red', 
         text: 'Cancelled',
         icon: <CloseCircleOutlined />
+      },
+      awaiting_driver_confirmation: {
+        color: 'orange',
+        text: 'Awaiting Driver',
+        icon: <ClockCircleOutlined />
+      },
+      searching: {
+        color: 'purple',
+        text: 'Searching',
+        icon: <LoadingOutlined />
+      },
+      arrived: {
+        color: 'blue',
+        text: 'Arrived',
+        icon: <CarOutlined />
       }
     };
     
@@ -172,7 +234,7 @@ const UserDashboard: React.FC = () => {
   const getFilteredRides = () => {
     switch (activeTab) {
       case 'active':
-        return allRides.filter(r => ['pending', 'accepted', 'in_progress'].includes(r.status));
+        return allRides.filter(r => ['pending', 'accepted', 'picked_up', 'in_progress'].includes(r.status));
       case 'completed':
         return allRides.filter(r => r.status === 'completed');
       case 'cancelled':
@@ -185,6 +247,12 @@ const UserDashboard: React.FC = () => {
   const handleCancelRide = (ride: Ride) => {
     setRideToCancel(ride);
     setIsCancelModalVisible(true);
+  };
+
+  const handleViewRide = (ride: Ride) => {
+    console.log(ride);
+    setSelectedRide(ride);
+    setIsViewModalVisible(true);
   };
 
   const confirmCancelRide = async () => {
@@ -208,6 +276,48 @@ const UserDashboard: React.FC = () => {
       toast.error(error.message || 'Failed to cancel ride');
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleDriverArrived = async (rideId: string) => {
+    setUpdatingRide(rideId);
+    try {
+      // Call API to update ride status
+      const response = await rideService.updateRideStatus(rideId, 'picked_up');
+      if (response?.success) {
+        const updatedRides = allRides.map(ride => 
+          ride._id === rideId ? { ...ride, status: 'picked_up' as RideStatus, pickedUpAt: new Date().toISOString() } : ride
+        );
+        setAllRides(updatedRides);
+        toast.success('Driver arrival confirmed');
+      } else {
+        toast.error(response?.message || 'Failed to confirm driver arrival');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to confirm driver arrival');
+    } finally {
+      setUpdatingRide(null);
+    }
+  };
+
+  const handleCompleteRide = async (rideId: string) => {
+    setUpdatingRide(rideId);
+    try {
+      // Call API to complete ride
+      const response = await rideService.updateRideStatus(rideId, 'completed');
+      if (response?.success) {
+        const updatedRides = allRides.map(ride => 
+          ride._id === rideId ? { ...ride, status: 'completed' as RideStatus, completedAt: new Date().toISOString() } : ride
+        );
+        setAllRides(updatedRides);
+        toast.success('Ride completed successfully');
+      } else {
+        toast.error(response?.message || 'Failed to complete ride');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to complete ride');
+    } finally {
+      setUpdatingRide(null);
     }
   };
 
@@ -277,29 +387,35 @@ const UserDashboard: React.FC = () => {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: Ride) => {
-        const isCancellable = ['pending', 'accepted'].includes(record.status);
+        const isCancellable = ['pending', 'awaiting_driver_confirmation'].includes(record.status);
+        const isAccepted = record.status === 'accepted';
+        const isPickedUp = record.status === 'picked_up';
+        const isInProgress = record.status === 'in_progress';
         
         return (
-          <Space>
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              className="text-[#1890FF] hover:text-[#1890FF]/80"
-              onClick={() => navigate(`/ride/${record._id}`)}
-            >
-              View
-            </Button>
-            {isCancellable && (
-              <Button
-                type="text"
-                danger
-                icon={<CloseCircleOutlined />}
-                onClick={() => handleCancelRide(record)}
-              >
-                Cancel
-              </Button>
-            )}
-          </Space>
+         <Space align="center">
+          <Button type="text" icon={<EyeOutlined />} className="text-[#1890FF] hover:text-[#1890FF]/80" onClick={() => handleViewRide(record)}>View</Button>
+          {isCancellable && <Button type="text" danger icon={<CloseCircleOutlined />} onClick={() => handleCancelRide(record)}>Cancel</Button>}
+          {isAccepted && (
+            <>
+              <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded border border-blue-200">
+                <LoadingOutlined className="text-blue-500 animate-spin text-xs" />
+                <Text className="text-xs text-blue-700 font-medium">Arriving soon</Text>
+              </div>
+              <Button type="primary" size="small" icon={<CheckCircleOutlined />} loading={updatingRide === record._id} onClick={() => handleDriverArrived(record._id)} className="bg-green-500 border-green-500 hover:bg-green-600">Driver Arrived</Button>
+            </>
+          )}
+          {(isPickedUp || isInProgress) && (
+            <>
+              <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 rounded border border-orange-200">
+                <Text className="text-xs text-orange-700 font-medium">
+                  {isPickedUp ? '🚗 En route' : '🚗 In progress'}
+                </Text>
+              </div>
+              <Button type="primary" size="small" icon={<CheckCircleOutlined />} loading={updatingRide === record._id} onClick={() => handleCompleteRide(record._id)} className="bg-green-500 border-green-500 hover:bg-green-600">Complete Ride</Button>
+            </>
+          )}
+        </Space>
         );
       }
     }
@@ -436,7 +552,204 @@ const UserDashboard: React.FC = () => {
    
       </div>
 
-      {/* Cancel Ride Modal */}
+      {/* Ride Details Modal */}
+      <Modal
+        title="Ride Details"
+        open={isViewModalVisible}
+        onCancel={() => setIsViewModalVisible(false)}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setIsViewModalVisible(false)}>
+            Close
+          </Button>,
+        ]}
+        width={700}
+      >
+        {selectedRide && (
+          <div className="space-y-6">
+            {/* Ride Information */}
+            <div className="border-b pb-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Ride Information</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Text className="text-gray-600 text-sm">Ride ID</Text>
+                  <Text strong className="text-gray-900 block mt-1">
+                    {selectedRide._id.slice(-6).toUpperCase()}
+                  </Text>
+                </div>
+                <div>
+                  <Text className="text-gray-600 text-sm">Status</Text>
+                  <div className="mt-1">
+                    {getStatusTag(selectedRide.status)}
+                  </div>
+                </div>
+                <div>
+                  <Text className="text-gray-600 text-sm">Ride Type</Text>
+                  <Text strong className="text-gray-900 block mt-1 capitalize">
+                    {selectedRide.rideType}
+                  </Text>
+                </div>
+                <div>
+                  <Text className="text-gray-600 text-sm">Date & Time</Text>
+                  <Text strong className="text-gray-900 block mt-1">
+                    {dayjs(selectedRide.createdAt).format('MMM D, YYYY h:mm A')}
+                  </Text>
+                </div>
+              </div>
+            </div>
+
+            {/* Route Information */}
+            <div className="border-b pb-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Route</h4>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                    <Text className="text-gray-600 text-sm">Pickup Location</Text>
+                  </div>
+                  <Text className="text-gray-900 block ml-5">
+                    {selectedRide.pickupLocation.address}
+                  </Text>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                    <Text className="text-gray-600 text-sm">Destination</Text>
+                  </div>
+                  <Text className="text-gray-900 block ml-5">
+                    {selectedRide.destination.address}
+                  </Text>
+                </div>
+              </div>
+            </div>
+
+            {/* Driver Information */}
+            {selectedRide.driverId && ['accepted', 'in_progress', 'completed'].includes(selectedRide.status) && (
+              <div className="border-b pb-4">
+                <h4 className="font-semibold text-gray-900 mb-3">Driver Details</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="mb-3">
+                        <Text strong className="text-gray-900 block">
+                          Driver ID: {selectedRide.driverId._id.slice(-6).toUpperCase()}
+                        </Text>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-yellow-500">★</span>
+                          <Text className="text-gray-700">
+                            {selectedRide.driverId.driverRating || 'N/A'}
+                          </Text>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div>
+                          <Text className="text-gray-600 text-sm">Phone</Text>
+                          <Text className="text-gray-900 block">{selectedRide.driverId.userId.phone}</Text>
+                        </div>
+                        <div>
+                          <Text className="text-gray-600 text-sm">License Number</Text>
+                          <Text className="text-gray-900 block">{selectedRide.driverId.licenseNumber}</Text>
+                        </div>                        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Vehicle Information */}
+            {selectedRide.vehicleId && ['accepted', 'in_progress', 'completed'].includes(selectedRide.status) && (
+              <div className="border-b pb-4">
+                <h4 className="font-semibold text-gray-900 mb-3">Vehicle Details</h4>
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Text className="text-gray-600 text-sm">Vehicle ID</Text>
+                      <Text strong className="text-gray-900 block mt-1">
+                        {typeof selectedRide.vehicleId === 'string'
+                          ? selectedRide.vehicleId.slice(-6).toUpperCase()
+                          : (selectedRide.vehicleId && typeof selectedRide.vehicleId === 'object' && ' _id' in selectedRide.vehicleId)
+                            ? selectedRide.vehicleId._id.slice(-6).toUpperCase()
+                            : ''}
+                      </Text>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Status Timeline */}
+            <div className="border-b pb-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Timeline</h4>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-3 h-3 rounded-full bg-blue-500 mt-1.5"></div>
+                    <div className="w-0.5 h-8 bg-blue-200"></div>
+                  </div>
+                  <div>
+                    <Text strong className="text-gray-900">Ride Requested</Text>
+                    <Text className="text-gray-600 text-sm block">
+                      {dayjs(selectedRide.createdAt).format('MMM D, YYYY h:mm A')}
+                    </Text>
+                  </div>
+                </div>
+                {selectedRide.acceptedAt && (
+                  <div className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-3 h-3 rounded-full bg-green-500 mt-1.5"></div>
+                      <div className="w-0.5 h-8 bg-green-200"></div>
+                    </div>
+                    <div>
+                      <Text strong className="text-gray-900">Driver Accepted</Text>
+                      <Text className="text-gray-600 text-sm block">
+                        {dayjs(selectedRide.acceptedAt).format('MMM D, YYYY h:mm A')}
+                      </Text>
+                    </div>
+                  </div>
+                )}
+                {selectedRide.status === 'in_progress' && (
+                  <div className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-3 h-3 rounded-full bg-orange-500 mt-1.5"></div>
+                      <div className="w-0.5 h-8 bg-orange-200"></div>
+                    </div>
+                    <div>
+                      <Text strong className="text-gray-900">Driver En Route</Text>
+                      <Text className="text-gray-600 text-sm block">
+                        Driver is on the way to your location
+                      </Text>
+                    </div>
+                  </div>
+                )}
+                {selectedRide.status === 'completed' && (
+                  <div className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-3 h-3 rounded-full bg-green-500 mt-1.5"></div>
+                    </div>
+                    <div>
+                      <Text strong className="text-gray-900">Ride Completed</Text>
+                      <Text className="text-gray-600 text-sm block">
+                        {dayjs(selectedRide.pickedUpAt).format('MMM D, YYYY h:mm A')}
+                      </Text>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Fare Information */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">Fare</h4>
+              <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <Text className="text-gray-600">Total Fare</Text>
+                <Text strong className="text-2xl text-gray-900">
+                  ₦{selectedRide.totalFare?.toLocaleString() || '0'}
+                </Text>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
       <Modal
         title={
           <div className="flex items-center gap-2">

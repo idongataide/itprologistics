@@ -376,7 +376,7 @@ const DriverList: React.FC = () => {
       dataIndex: 'totalTrips',
       key: 'totalTrips',
       width: 100,
-      render: (trips: number, record: DriverWithIncompleteDetails) => (
+      render: (trips: number) => (
         <div className="text-center">
           <div className="font-medium">{trips || 0}</div>
           <div className="text-xs text-gray-500">trips</div>
@@ -388,7 +388,7 @@ const DriverList: React.FC = () => {
       dataIndex: 'driverRating',
       key: 'driverRating',
       width: 120,
-      render: (rating: number, record: DriverWithIncompleteDetails) => (
+      render: (rating: number) => (
         <div className="flex items-center">
           <span className="text-yellow-500 mr-1">★</span>
           <span className="font-medium">{rating?.toFixed(1) || '0.0'}</span>

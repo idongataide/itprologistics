@@ -385,6 +385,28 @@ export const getAvailableDrivers = async (rideId: string): Promise<any> => {
   }
 };
 
+// Update ride status
+export const updateRideStatus = async (rideId: string, status: string): Promise<RideResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/rides/${rideId}/status`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to update ride status');
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error('Error updating ride status:', error);
+    throw new Error(error.message || 'Failed to update ride status');
+  }
+};
+
 // Ride options with pricing in Naira
 export const RIDE_OPTIONS = [
   { 
@@ -476,6 +498,7 @@ export default {
   rateRide,
   getActiveRide,
   getAvailableDrivers,
+  updateRideStatus,
   calculateLocalEstimate,
   RIDE_OPTIONS,
   formatCurrency,

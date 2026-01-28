@@ -26,7 +26,7 @@ import adminRideService from '@/services/admin/adminRideService';
 
 const { Title, Text } = Typography;
 
-type RideStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'awaiting_driver_confirmation';
+type RideStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'awaiting_driver_confirmation' | 'picked_up';
 
 interface Ride {
   _id: string;
@@ -71,8 +71,9 @@ const AdminRides: React.FC = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
   const [isCompleteDeclineModalVisible, setIsCompleteDeclineModalVisible] = useState(false);
+  const [isPickupModalVisible, setIsPickupModalVisible] = useState(false);
   const [rideToAction, setRideToAction] = useState<Ride | null>(null);
-  const [actionType, setActionType] = useState<'complete' | 'decline' | null>(null);
+  const [actionType, setActionType] = useState<'complete' | 'decline' | 'pickup' | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [allRides, setAllRides] = useState<Ride[]>([]);
@@ -113,6 +114,7 @@ const AdminRides: React.FC = () => {
       pending: { color: 'orange', text: 'Pending', icon: <ClockCircleOutlined /> },
       accepted: { color: 'blue', text: 'Accepted', icon: <CheckCircleOutlined /> },
       in_progress: { color: 'cyan', text: 'In Progress', icon: <ClockCircleOutlined /> },
+      picked_up: { color: 'cyan', text: 'Picked Up', icon: <ClockCircleOutlined /> },
       completed: { color: 'green', text: 'Completed', icon: <CheckCircleOutlined /> },
       cancelled: { color: 'red', text: 'Cancelled', icon: <ExclamationCircleOutlined /> },
       active: { color: 'green', text: 'Active', icon: <CheckCircleOutlined /> },
@@ -268,6 +270,44 @@ const AdminRides: React.FC = () => {
     }
   };
 
+  const handlePickupRide = (ride: Ride) => {
+    setRideToAction(ride);
+    setActionType('pickup');
+    setIsPickupModalVisible(true);
+  };
+
+  const confirmPickupRide = async () => {
+    if (!rideToAction) return;
+
+    setActionLoading(true);
+    try {
+      // Update ride status to picked_up
+      const response = await adminRideService.updateRideStatus(rideToAction._id, 'picked_up');
+
+      if (response.success) {
+        // Update local state
+        setAllRides(prevRides =>
+          prevRides.map(r =>
+            r._id === rideToAction._id
+              ? { ...r, status: 'picked_up' }
+              : r
+          )
+        );
+
+        toast.success('Ride marked as picked up successfully!');
+        setIsPickupModalVisible(false);
+        setRideToAction(null);
+        setActionType(null);
+      } else {
+        toast.error(response.message || 'Failed to mark pickup');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to mark pickup');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const ridesColumns = [
     {
       title: 'Ride ID',
@@ -319,7 +359,7 @@ const AdminRides: React.FC = () => {
           </div>
           <div className="flex items-center">
             <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
-            <Text className="text-[#475467] truncate" style={{ maxWidth: '150px' }}>
+            <Text className="text-[#475467] !capitalize truncate" style={{ maxWidth: '150px' }}>
               {record.destination.address}
             </Text>
           </div>
@@ -357,7 +397,8 @@ const AdminRides: React.FC = () => {
       key: 'actions',
       render: (_: any, record: Ride) => {
         const isAssignable = record.status === 'pending';
-        const isCompletableDeclinable = ['accepted', 'in_progress'].includes(record.status);
+        const isPickupable = record.status === 'accepted';
+        const isCompletableDeclinable = ['in_progress', 'picked_up'].includes(record.status);
 
         return (
           <Space wrap>
@@ -371,6 +412,27 @@ const AdminRides: React.FC = () => {
               >
                 Assign
               </Button>
+            )}
+            {isPickupable && (
+              <>
+                <Button
+                  type="primary"
+                  size="small"
+                  className="bg-orange-500 hover:bg-orange-600 border-0"
+                  onClick={() => handlePickupRide(record)}
+                >
+                  Mark Pickup
+                </Button>
+                <Button
+                  type="default"
+                  danger
+                  size="small"
+                  icon={<CloseCircleOutlined />}
+                  onClick={() => handleCompleteDeclineRide(record, 'decline')}
+                >
+                  Decline
+                </Button>
+              </>
             )}
             {isCompletableDeclinable && (
               <>
@@ -394,7 +456,7 @@ const AdminRides: React.FC = () => {
                 </Button>
               </>
             )}
-            {!isAssignable && !isCompletableDeclinable && (
+            {!isAssignable && !isPickupable && !isCompletableDeclinable && (
               <Text type="secondary" className="text-xs">Not actionable</Text>
             )}
           </Space>
@@ -707,6 +769,74 @@ const AdminRides: React.FC = () => {
                 <Text strong>Fare:</Text>
                 <Text strong className="text-gray-900">₦{rideToAction.totalFare?.toLocaleString() || '0'}</Text>
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Pickup Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <CarOutlined className="text-orange-500" />
+            <span>Confirm Pickup</span>
+          </div>
+        }
+        open={isPickupModalVisible}
+        onCancel={() => setIsPickupModalVisible(false)}
+        footer={[
+          <Button key="back" onClick={() => setIsPickupModalVisible(false)}>
+            Go Back
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={actionLoading}
+            onClick={confirmPickupRide}
+            className="bg-orange-500 hover:bg-orange-600 border-0"
+          >
+            Confirm Pickup
+          </Button>,
+        ]}
+      >
+        {rideToAction && (
+          <div className="py-4">
+            <Text>Mark the passenger as picked up by the driver?</Text>
+            <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="mb-2">
+                <Text strong className="block mb-3">Ride Details:</Text>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <Text strong>Ride ID:</Text>
+                  <Text>{rideToAction._id.slice(-6).toUpperCase()}</Text>
+                </div>
+                <div className="flex justify-between items-center">
+                  <Text strong>Rider:</Text>
+                  <Text>{rideToAction.userName || 'N/A'}</Text>
+                </div>
+                <div className="flex justify-between items-center">
+                  <Text strong>Driver:</Text>
+                  <Text>{rideToAction.driverName || 'Unassigned'}</Text>
+                </div>
+                <div className="flex justify-between items-center">
+                  <Text strong>Pickup Location:</Text>
+                  <Text className="text-right">{rideToAction.pickupLocation.address}</Text>
+                </div>
+                <div className="flex justify-between items-center">
+                  <Text strong>Destination:</Text>
+                  <Text className="text-right">{rideToAction.destination.address}</Text>
+                </div>
+                <div className="flex justify-between items-center">
+                  <Text strong>Vehicle Type:</Text>
+                  <Text className="capitalize">{rideToAction.rideType}</Text>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <Text type="secondary" className="text-sm">
+                This action will mark the passenger as picked up and the ride will move to "In Progress" status.
+              </Text>
             </div>
           </div>
         )}

@@ -503,6 +503,99 @@ router.post('/:id/decline', auth, async (req, res) => {
   }
 });
 
+// @route   PATCH /api/rides/:id/status
+// @desc    Update ride status
+// @access  Private
+router.patch('/:id/status', auth, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status is required'
+      });
+    }
+
+    // Valid status transitions
+    const validStatuses = ['pending', 'searching', 'awaiting_driver_confirmation', 'accepted', 'picked_up', 'in_progress', 'completed', 'cancelled'];
+    
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status'
+      });
+    }
+
+    // Find the ride
+    const ride = await Ride.findById(req.params.id)
+      .populate('driverId')
+      .populate({
+        path: 'driverId',
+        populate: {
+          path: 'userId',
+          select: 'name phone'
+        }
+      });
+
+    if (!ride) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ride not found'
+      });
+    }
+
+    // Check authorization - user must be either the rider or the driver
+    const driverDetail = await DriverDetail.findOne({ userId: req.user.id });
+    const isRider = ride.userId.toString() === req.user.id;
+    const isDriver = driverDetail && ride.driverId && ride.driverId._id.toString() === driverDetail._id.toString();
+
+    if (!isRider && !isDriver) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to update this ride'
+      });
+    }
+
+    // Update status with appropriate timestamps
+    ride.status = status;
+
+    if (status === 'picked_up') {
+      ride.pickedUpAt = new Date();
+    } else if (status === 'in_progress') {
+      ride.startedAt = new Date();
+    } else if (status === 'completed') {
+      ride.completedAt = new Date();
+      ride.paymentStatus = 'pending'; // Mark payment as pending after completion
+    }
+
+    await ride.save();
+
+    // Populate the updated ride for response
+    const updatedRide = await Ride.findById(req.params.id)
+      .populate('driverId')
+      .populate({
+        path: 'driverId',
+        populate: {
+          path: 'userId',
+          select: 'name phone'
+        }
+      });
+
+    res.json({
+      success: true,
+      message: `Ride status updated to ${status}`,
+      ride: updatedRide
+    });
+  } catch (error) {
+    console.error('Error updating ride status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating ride status'
+    });
+  }
+});
+
 // @route   POST /api/rides/:id/rate
 // @desc    Rate a completed ride
 // @access  Private

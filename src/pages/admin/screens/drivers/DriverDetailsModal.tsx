@@ -82,7 +82,7 @@ const DriverDetailsModal: React.FC<DriverDetailsModalProps> = ({
           <div className="bg-gray-50 p-4 rounded">
             {selectedDriver.address.street},<br />
             {selectedDriver.address.city}, {selectedDriver.address.state}<br />
-            {selectedDriver.address.zipCode}, {selectedDriver.address.country}
+            {selectedDriver.address.postalCode}, {selectedDriver.address.country}
           </div>
         </div>
 

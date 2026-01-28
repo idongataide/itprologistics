@@ -33,7 +33,6 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { RideRequest } from '@/types';
 import rideService, { 
   RIDE_OPTIONS, 
   formatCurrency, 

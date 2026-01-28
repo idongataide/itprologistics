@@ -29,6 +29,7 @@ app.use('/api', require('./routes/admin/driver'));
 app.use('/api', require('./routes/admin/vehicle'));
 app.use('/api', require('./routes/admin/rides'));
 app.use('/api/rides', require('./routes/rides'));
+app.use('/api', require('./routes/user'));
 
 
 // Basic Route
