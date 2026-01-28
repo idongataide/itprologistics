@@ -374,13 +374,9 @@ const VehicleList: React.FC = () => {
                 rules={[{ required: true, message: 'Please select vehicle type' }]}
               >
                 <Select placeholder="Select vehicle type">
-                  <Option value="sedan">Sedan</Option>
-                  <Option value="suv">SUV</Option>
-                  <Option value="truck">Truck</Option>
-                  <Option value="van">Van</Option>
+                  <Option value="bicycle">Bicycle</Option>
                   <Option value="motorcycle">Motorcycle</Option>
-                  <Option value="bus">Bus</Option>
-                  <Option value="other">Other</Option>
+                  <Option value="car">Car</Option>
                 </Select>
               </Form.Item>
             </Col>

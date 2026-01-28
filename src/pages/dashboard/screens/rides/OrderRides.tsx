@@ -623,8 +623,7 @@ const OrderRide: React.FC = () => {
         throw new Error(data?.message || 'Failed to order ride');
       }  
       toast.success('Ride ordered successfully!');  
-      navigate('/dashboard/rides');
-  
+      navigate('/rides');  
     } catch (error: any) {
       toast.error(error.message || 'Failed to place ride');
     }
