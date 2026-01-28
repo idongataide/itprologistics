@@ -27,9 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedToken = authService.getToken();
     if (storedToken) {
-      setToken(storedToken);
-      // In a real app, you would decode the token or make an API call to get user info
-      // For simplicity, we'll just set a placeholder user
+      setToken(storedToken);      
       setUser({ id: 'someId', role: 'user' }); // Placeholder
     }
     setLoading(false);
