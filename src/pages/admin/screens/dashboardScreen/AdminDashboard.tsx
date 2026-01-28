@@ -180,7 +180,7 @@ const AdminDashboard: React.FC = () => {
         {/* Stats Grid */}
         <Row gutter={[24, 24]} className="mb-8">
           {adminStats.map((stat, index) => (
-            <Col xs={24} sm={12} lg={8} xl={6} key={index}>
+            <Col xs={24} sm={12} lg={8} xl={8} xxl={6} key={index}>
               <Card className="border-0 shadow-sm rounded-2xl hover:shadow-xl transition-all duration-300 h-full">
                 <div className="flex items-center justify-between">
                   <div>
