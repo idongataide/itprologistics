@@ -1,8 +1,8 @@
 const Images = {
     bookingBanner: "/images/banner.svg",
     authbg: "/images/authbg.png",
-    logo: "/images/logo.png",
-    logodark: "/images/logo.png",
+    logo: "/images/logo.svg",
+    logodark: "/images/logo.jpeg",
     success: "/images/success.png",
     smallLogo: "/images/smallLogo.svg",
     avatar: "/images/Avatar.png",
@@ -30,7 +30,7 @@ const Images = {
       siderIcon: "/images/Expand icon.svg",
       filter: "/images/icons/filter.svg",
       medal: "/images/medal.svg",
-      fav: "/images/icons/fav.svg",
+      fav: "/images/logo.png",
     },
   };
   
