@@ -1,8 +1,8 @@
 const Images = {
     bookingBanner: "/images/banner.svg",
     authbg: "/images/authbg.png",
-    logo: "/images/logo-white.svg",
-    logodark: "/images/logo.jpeg",
+    logo: "/images/logo.png",
+    logodark: "/images/logo.png",
     success: "/images/success.png",
     smallLogo: "/images/smallLogo.svg",
     avatar: "/images/Avatar.png",
