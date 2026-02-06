@@ -6,9 +6,10 @@ const getBaseUrl = () => {
   
   // For production, use relative path
   if (process.env.NODE_ENV === 'production') {
+    console.log('Using production API URL');
     return 'https://itprologistics-backend.onrender.com/api';
   }
-  
+  console.log('Using development API URL');
   // Default to local development
   return 'http://localhost:5000/api';
 };
