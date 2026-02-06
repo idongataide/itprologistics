@@ -1,8 +1,8 @@
 const getBaseUrl = () => {
   // If we have an environment variable set, use it
-  if (process.env.REACT_APP_API_URL) {
-    console.log('Using REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
-    return process.env.REACT_APP_API_URL;
+  if (process.env.VITE_API_URL) {
+    console.log('Using VITE_API_URL:', process.env.VITE_API_URL);
+    return process.env.VITE_API_URL;
   }
   
   // For production, use relative path
