@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://resq-admin.onrender.com/api/:path*"
+      "destination": "https://itprologistics-backend.onrender.com/api/:path*"
     },
     {
       "source": "/wallet/:path*",
@@ -17,4 +17,4 @@
       "destination": "/"
     }
   ]
-} 
+}
