@@ -3,11 +3,11 @@ const getBaseUrl = () => {
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  
-  // For production, use relative path
+
+  // For production, use cPanel backend URL
   if (process.env.NODE_ENV === 'production') {
     console.log('Using production API URL');
-    return 'https://itprologistics-backend.onrender.com/api';
+    return 'https://api.itprologistics.com/api';
   }
   console.log('Using development API URL');
   // Default to local development
