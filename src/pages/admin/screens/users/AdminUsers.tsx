@@ -277,7 +277,7 @@ const AdminUsers: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: '10px' }}>
       <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }}>
         <Col>
           <Title level={2}>User Management</Title>

@@ -102,7 +102,7 @@ const DriverAccountLayout: React.FC = () => {
 
             <Card 
               className="border-0 shadow-sm rounded-xl"
-              bodyStyle={{ padding: '24px' }}
+              bodyStyle={{ padding: '10px' }}
             >
               <nav className="flex flex-col space-y-1 mb-8">
                 <NavLink

@@ -193,3 +193,9 @@ h2.ant-typography{
 .ant-table-content{
   overflow-x: scroll;
 }
+
+@media (max-width: 768px) {
+ .ant-card-body{
+    padding: 10px !important;
+  }
+}

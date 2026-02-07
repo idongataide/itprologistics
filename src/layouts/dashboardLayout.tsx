@@ -210,7 +210,7 @@ const DashboardLayout: React.FC = () => {
           <Content
             style={{
               marginTop: '80px', // Header height
-              padding: 24,
+              padding: 10,
               background: '#fff',
               minHeight: 'calc(100vh - 80px)',
               overflow: 'auto',
