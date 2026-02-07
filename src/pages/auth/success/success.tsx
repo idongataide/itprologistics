@@ -19,7 +19,7 @@ const Success = () => {
                 <title>RESQ: Password Reset Success</title>
                 <link rel="canonical" href={`${URL}`} />
             </Helmet>
-            {/* Logo */}
+            {/* Logo  */}
               <div className="flex justify-center m-auto mb-6">
                     <img 
                     src={Images.logodark} 
