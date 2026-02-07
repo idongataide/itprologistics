@@ -89,7 +89,11 @@ const Register: React.FC = () => {
       </Helmet>
 
       <div className="flex justify-center m-auto mb-6">
-        <img src={Images.logodark} alt="Logo" className="h-10" />
+        <img 
+          src={Images.logodark} 
+          alt="Logo" 
+          className="h-12 sm:h-14 md:h-18 lg:h-20" 
+        />
       </div>
       
       <div className="mb-8 text-start w-full">

@@ -11,7 +11,7 @@ const Unauthorized: React.FC = () => {
       title="403"
       subTitle="Sorry, you are not authorized to access this page."
       extra={
-        <Button type="primary" onClick={() => navigate('/dashboard')}>
+        <Button type="primary" onClick={() => navigate('/logib')}>
           Back to Dashboard
         </Button>
       }

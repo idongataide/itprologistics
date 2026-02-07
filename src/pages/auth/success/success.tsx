@@ -20,9 +20,13 @@ const Success = () => {
                 <link rel="canonical" href={`${URL}`} />
             </Helmet>
             {/* Logo */}
-            <div className="flex justify-center m-auto mb-1">
-                <img src={Images.success} alt="Ion" className="h-30" />
-            </div>
+              <div className="flex justify-center m-auto mb-6">
+                    <img 
+                    src={Images.logodark} 
+                    alt="Logo" 
+                    className="h-12 sm:h-14 md:h-18 lg:h-20" 
+                    />
+                </div>
             {/* Welcome Text */}
             <div className="text-center ">
                 <h2 className="text-2xl font-bold! text-[#475467] mb-1!">Success</h2>

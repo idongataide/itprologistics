@@ -93,9 +93,14 @@ const Login: React.FC = () => {
         <link rel="canonical" href={window.location.origin} />
       </Helmet>
 
-      <div className="flex justify-center m-auto mb-6">
-        <img src={Images.logodark} alt="Logo" className="h-10" />
+     <div className="flex justify-center m-auto mb-6">
+        <img 
+          src={Images.logodark} 
+          alt="Logo" 
+          className="h-12 sm:h-14 md:h-18 lg:h-20" 
+        />
       </div>
+
      
       <div className="mb-8 text-start">
         <h2 className="text-2xl font-bold text-[#475467] mb-1">Welcome Back</h2>
