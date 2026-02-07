@@ -524,8 +524,7 @@ const DriverList: React.FC = () => {
         </div>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
-          <Card className="shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">          <Card className="shadow-sm">
             <div className="flex items-center p-2 sm:p-0">
               <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-blue-100 flex items-center justify-center mr-2 sm:mr-3 md:mr-4">
                 <UserOutlined className="text-blue-600 text-sm sm:text-base md:text-xl" />
