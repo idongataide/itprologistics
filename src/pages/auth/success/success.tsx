@@ -16,7 +16,7 @@ const Success = () => {
         <div className="flex flex-col items-center w-full">
             <Helmet>
                 <meta charSet="utf-8" />
-                <title>RESQ: Password Reset Success</title>
+                <title>ITpro logogistics: Password Reset Success</title>
                 <link rel="canonical" href={`${URL}`} />
             </Helmet>
             {/* Logo  */}
