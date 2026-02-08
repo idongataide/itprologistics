@@ -515,9 +515,9 @@ const DriverDashboard: React.FC = () => {
                       {/* Optional: Add click to call on mobile */}
                       <a 
                         href={`tel:${selectedRide.userId.phone}`}
-                        className="text-gray-500 hover:text-blue-700 hidden sm:inline!"
+                        className="text-gray-500 hover:text-blue-700"
                       >
-                        <PhoneOutlined className="min-w-[16px] text-gray-500! me-2" />
+                        <PhoneOutlined className="min-w-[16px] text-gray-500!" />
                       </a>
                       <Text className="truncate">
                         {selectedRide.userId.phone}
