@@ -510,18 +510,18 @@ const DriverDashboard: React.FC = () => {
                   
                   {/* Rider Phone Number - Added this section */}
                   {typeof selectedRide.userId === 'object' && selectedRide.userId.phone && (
-                    <div className="flex items-center gap-2 ml-6">
-                      <PhoneOutlined className="min-w-[16px] text-gray-500" />
-                      <Text className="truncate">
-                        {selectedRide.userId.phone}
-                      </Text>
+                    <div className="flex items-center gap-2">
+                     
                       {/* Optional: Add click to call on mobile */}
                       <a 
                         href={`tel:${selectedRide.userId.phone}`}
-                        className="ml-2 text-blue-500 hover:text-blue-700 hidden sm:inline"
+                        className="ml-2  text-gray-500 hover:text-blue-700 hidden sm:inline"
                       >
                         <PhoneOutlined />
                       </a>
+                      <Text className="truncate">
+                        {selectedRide.userId.phone}
+                      </Text>
                     </div>
                   )}
                 </div>
