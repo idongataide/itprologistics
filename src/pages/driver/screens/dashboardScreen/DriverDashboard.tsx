@@ -11,6 +11,7 @@ import {
   WarningOutlined,
   HistoryOutlined,
   UserOutlined,
+  PhoneOutlined,
   EnvironmentOutlined,
   CalendarOutlined,
 } from '@ant-design/icons';
@@ -463,7 +464,7 @@ const DriverDashboard: React.FC = () => {
       </div>
 
       {/* View Ride Details Modal */}
-      <Modal
+     <Modal
         title={
           <div className="flex items-center gap-2">
             <EyeOutlined className="text-blue-500" />
@@ -475,69 +476,83 @@ const DriverDashboard: React.FC = () => {
         footer={[
           <Button key="close" onClick={() => setIsViewModalVisible(false)}>
             Close
-          </Button>,
-          <Button
-            key="full"
-            type="primary"
-            onClick={() => {
-              if (selectedRide) {
-                navigate(`/driver-dashboard/rides/${selectedRide._id}`);
-              }
-            }}
-          >
-            View Full Details
-          </Button>,
+          </Button>,    
         ]}
         width={700}
+        className="ride-details-modal"
       >
         {selectedRide && (
           <div className="py-4">
-            <Descriptions bordered column={2}>
+            <Descriptions 
+              bordered 
+              column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}
+              size="middle"
+            >
               <Descriptions.Item label="Ride ID" span={2}>
-                <Text strong>{selectedRide._id}</Text>
+                <Text strong className="break-all">{selectedRide._id}</Text>
               </Descriptions.Item>
               
               <Descriptions.Item label="Status" span={2}>
                 {getStatusTag(selectedRide.status)}
               </Descriptions.Item>
               
-              <Descriptions.Item label="Rider">
-                <div className="flex items-center gap-2">
-                  <UserOutlined />
-                  <Text>
-                    {typeof selectedRide.userId === 'object' 
-                      ? selectedRide.userId.fullname 
-                      : 'N/A'}
-                  </Text>
+              <Descriptions.Item label="Rider" span={2}>
+                <div className="flex flex-col gap-2 sm:gap-1">
+                  {/* Rider Name */}
+                  <div className="flex items-center gap-2">
+                    <UserOutlined className="min-w-[16px]" />
+                    <Text className="truncate">
+                      {typeof selectedRide.userId === 'object' 
+                        ? selectedRide.userId.fullname 
+                        : 'N/A'}
+                    </Text>
+                  </div>
+                  
+                  {/* Rider Phone Number - Added this section */}
+                  {typeof selectedRide.userId === 'object' && selectedRide.userId.phone && (
+                    <div className="flex items-center gap-2 ml-6">
+                      <PhoneOutlined className="min-w-[16px] text-gray-500" />
+                      <Text className="truncate">
+                        {selectedRide.userId.phone}
+                      </Text>
+                      {/* Optional: Add click to call on mobile */}
+                      <a 
+                        href={`tel:${selectedRide.userId.phone}`}
+                        className="ml-2 text-blue-500 hover:text-blue-700 hidden sm:inline"
+                      >
+                        <PhoneOutlined />
+                      </a>
+                    </div>
+                  )}
                 </div>
               </Descriptions.Item>
               
               <Descriptions.Item label="Created Date">
                 <div className="flex items-center gap-2">
-                  <CalendarOutlined />
-                  <Text>{formatDate(selectedRide.createdAt).date}</Text>
+                  <CalendarOutlined className="min-w-[16px]" />
+                  <Text className="truncate">{formatDate(selectedRide.createdAt).date}</Text>
                 </div>
               </Descriptions.Item>
               
               <Descriptions.Item label="Created Time">
                 <div className="flex items-center gap-2">
-                  <ClockCircleOutlined />
-                  <Text>{formatDate(selectedRide.createdAt).time}</Text>
+                  <ClockCircleOutlined className="min-w-[16px]" />
+                  <Text className="truncate">{formatDate(selectedRide.createdAt).time}</Text>
                 </div>
               </Descriptions.Item>
               
               <Descriptions.Item label="Total Fare">
-                <Text strong className="text-lg">N{selectedRide.totalFare.toFixed(2)}</Text>
+                <Text strong className="text-lg whitespace-nowrap">N{selectedRide.totalFare.toFixed(2)}</Text>
               </Descriptions.Item>
               
               <Descriptions.Item label="Pickup Location" span={2}>
                 <div className="flex items-start gap-2">
-                  <EnvironmentOutlined className="text-green-500 mt-1" />
-                  <div>
-                    <Text strong>{selectedRide.pickupLocation.address}</Text>
+                  <EnvironmentOutlined className="text-green-500 mt-1 min-w-[16px]" />
+                  <div className="min-w-0">
+                    <Text strong className="break-words">{selectedRide.pickupLocation.address}</Text>
                     {(selectedRide.pickupLocation as any).landmark && (
                       <div>
-                        <Text type="secondary" className="text-sm">
+                        <Text type="secondary" className="text-sm break-words">
                           Landmark: {(selectedRide.pickupLocation as any).landmark}
                         </Text>
                       </div>
@@ -548,12 +563,12 @@ const DriverDashboard: React.FC = () => {
               
               <Descriptions.Item label="Destination" span={2}>
                 <div className="flex items-start gap-2">
-                  <EnvironmentOutlined className="text-red-500 mt-1" />
-                  <div>
-                    <Text strong>{selectedRide.destination.address}</Text>
+                  <EnvironmentOutlined className="text-red-500 mt-1 min-w-[16px]" />
+                  <div className="min-w-0">
+                    <Text strong className="break-words">{selectedRide.destination.address}</Text>
                     {(selectedRide.destination as any).landmark && (
                       <div>
-                        <Text type="secondary" className="text-sm">
+                        <Text type="secondary" className="text-sm break-words">
                           Landmark: {(selectedRide.destination as any).landmark}
                         </Text>
                       </div>
@@ -564,26 +579,26 @@ const DriverDashboard: React.FC = () => {
               
               {selectedRide.distance && (
                 <Descriptions.Item label="Distance">
-                  <Text>{selectedRide.distance} km</Text>
+                  <Text className="whitespace-nowrap">{selectedRide.distance} km</Text>
                 </Descriptions.Item>
               )}
               
               {selectedRide.duration && (
                 <Descriptions.Item label="Estimated Duration">
-                  <Text>{selectedRide.duration} mins</Text>
+                  <Text className="whitespace-nowrap">{selectedRide.duration} mins</Text>
                 </Descriptions.Item>
               )}
               
               {selectedRide.paymentMethod && (
                 <Descriptions.Item label="Payment Method">
-                  <Tag color="blue">{selectedRide.paymentMethod}</Tag>
+                  <Tag color="blue" className="truncate">{selectedRide.paymentMethod}</Tag>
                 </Descriptions.Item>
               )}
               
               {selectedRide.notes && (
                 <Descriptions.Item label="Special Instructions" span={2}>
                   <div className="p-2 bg-gray-50 rounded border">
-                    <Text>{selectedRide.notes}</Text>
+                    <Text className="break-words">{selectedRide.notes}</Text>
                   </div>
                 </Descriptions.Item>
               )}
