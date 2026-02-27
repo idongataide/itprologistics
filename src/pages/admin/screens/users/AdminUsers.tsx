@@ -33,7 +33,7 @@ const { Option } = Select;
 const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   // Only non-driver users for display
-  const filteredUsers = users.filter(user => !['driver', 'admin'].includes(user.role));
+  const filteredUsers = users.filter(user => !['driver', 'charter-driver',  'admin'].includes(user.role));
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
