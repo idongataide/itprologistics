@@ -65,7 +65,7 @@ export interface CreateCharterDriverAccountData {
   email: string;
   phone: string;
   password: string;
-  role: 'driver';
+  role: 'driver' | 'charter-driver';
 }
 
 export interface CreateCharterDriverDetailsData {
