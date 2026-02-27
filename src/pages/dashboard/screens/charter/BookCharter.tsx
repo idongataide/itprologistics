@@ -147,6 +147,7 @@ const BookCharter: React.FC = () => {
         destination: values.destination,
         vehicleNeeded: values.vehicleNeeded, // This will be the vehicle ID
         passengers: values.passengers,
+        
         specialRequests: values.specialRequests,
         tripDate: values.tripDate ? values.tripDate.format('YYYY-MM-DD') : undefined,
         tripTime: values.tripTime ? values.tripTime.format('HH:mm') : undefined,

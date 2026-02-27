@@ -42,7 +42,7 @@ const CharterAddDriver: React.FC = () => {
     try {
       const response = await charterDriverService.createCharterDriverAccount({
         ...values,
-        role: 'driver'
+        role: 'charter-driver'
       });
   
       message.success('Charter driver account created successfully!');

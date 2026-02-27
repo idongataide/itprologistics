@@ -8,7 +8,7 @@ export interface CharterDriverUser {
   fullname: string;
   email: string;
   phone: string;
-  role: 'user' | 'driver' | 'admin';
+  role: 'user' | 'driver' | 'charter-driver' | 'admin';
   isActive: boolean;
   createdAt: string;
   isEmailVerified?: boolean;
