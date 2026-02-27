@@ -930,16 +930,35 @@ const OrderRide: React.FC = () => {
                   </Form.Item>
 
                   {/* Payment Information Notice */}
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-200">
                     <div className="flex items-start">
-                      <InfoCircleOutlined className="text-blue-500 mt-1 mr-3" />
+                      <InfoCircleOutlined className="text-orange-700 mt-1 mr-3" />
                       <div>
-                        <h2 className="text-blue-700 block mb-1">
+                        <h2 className="text-[#000] block mb-2 font-semibold">
                           Payment Information
                         </h2>
-                        <p className="text-blue-600 text-sm">
-                          We are currently accepting cash payments only. Online payment options will be available soon. 
+                        <p className="text-gray-700 text-sm mb-3">
+                          We are currently accepting cash payments only. Online payment options will be available soon.
                         </p>
+                        
+                        {/* Bank Account Details */}
+                        <div className="bg-white rounded p-3 border border-red-200 mt-3">
+                          <p className="text-[#000] text-sm font-semibold mb-2">Bank Transfer Details:</p>
+                          <div className="space-y-1 text-sm text-gray-700">
+                            <div className="flex justify-between">
+                              <span className="font-medium">Bank:</span>
+                              <span>GTBANK PLC</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-medium">Account Name:</span>
+                              <span>ITPRO SYSTEMS AND SERVICES LTD</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-medium">Account Number:</span>
+                              <span className="font-mono font-semibold">0651984538</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

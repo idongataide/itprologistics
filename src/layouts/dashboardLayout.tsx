@@ -66,6 +66,13 @@ const DashboardLayout: React.FC = () => {
       roles: ['user']
     },
     {
+      id: 2,
+      title: "Charter",
+      URL: "charter",
+      icon: <IoIosCalendar className="text-2xl" />,
+      roles: ['user']
+    },
+    {
       id: 3,
       title: "Account",
       URL: "account",

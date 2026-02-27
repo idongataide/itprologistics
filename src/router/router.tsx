@@ -13,14 +13,25 @@ import DriverDashboard from "@/pages/driver/screens/dashboardScreen/DriverDashbo
 import AdminDashboard from "@/pages/admin/screens/dashboardScreen/AdminDashboard";
 import AdminUsers from "@/pages/admin/screens/users/AdminUsers";
 import AdminRides from "@/pages/admin/screens/rides/AdminRides";
-import DriverList from "@/pages/admin/screens/drivers/DriverList"; // Renamed
-import AddDriver from "@/pages/admin/screens/drivers/AddDriver"; // New import
+import DriverList from "@/pages/admin/screens/drivers/DriverList";
+import AddDriver from "@/pages/admin/screens/drivers/AddDriver";
 import AdminCreateOrders from "@/pages/admin/screens/orders/AdminCreateOrders";
 import DriverRides from "@/pages/driver/screens/rides/DriverRides";
 import { DriverAccountLayout, DriverProfile, DriverChangePassword, DriverVehicleInfo } from "@/pages/driver/screens/account/DriverAccount";
 import Unauthorized from "@/pages/Unauthorized";
 import AddDriverDetails from "@/pages/admin/screens/drivers/AddDriverDetails";
 import VehicleList from "@/pages/admin/screens/vehicles/vehicleList";
+import BookCharter from "@/pages/dashboard/screens/charter/BookCharter";
+
+// Charter imports
+import CharterDriverList from "@/pages/admin/screens/charter/CharterDriverList";
+import CharterAdminOrders from "@/pages/admin/screens/charter/CharterOrder";
+import CharterVehicleList from "@/pages/admin/screens/charter/Vehicles";
+import CharterAddDriver from "@/pages/admin/screens/charter/CharterAddDriver";
+import CharterAddDriverDetails from "@/pages/admin/screens/charter/CharterAddDriverDetails";
+
+
+
 
 const AccountLayout = lazy(() => import("@/pages/dashboard/screens/account/AccountLayout"));
 const Profile = lazy(() => import("@/pages/dashboard/screens/account/Profile"));
@@ -33,19 +44,38 @@ export const routes = createBrowserRouter([
     element: (
       <Suspense fallback={<LoadingScreen />}>
         <ProtectedRoute requiredRole="admin">
-          <DashboardLayout  />
+          <DashboardLayout />
         </ProtectedRoute>
       </Suspense>
     ),
     children: [
+      // Main Admin Routes
       { index: true, element: <AdminDashboard /> },
       { path: "users", element: <AdminUsers /> },
       { path: "rides", element: <AdminRides /> },
-      { path: "drivers", element: <DriverList /> }, // Updated route and component
-      { path: "drivers/add", element: <AddDriver /> }, // New route for adding drivers
-      { path:"/admin/drivers/:driverId/add-details", element: <AddDriverDetails /> },
+      { path: "drivers", element: <DriverList /> },
+      { path: "drivers/add", element: <AddDriver /> },
+      { path: "drivers/:driverId/add-details", element: <AddDriverDetails /> },
       { path: "vehicles", element: <VehicleList /> },
       { path: "orders/create", element: <AdminCreateOrders /> },
+      // Charter Routes
+      // Charter Routes
+      {
+        path: "charter",
+        children: [
+          // Charter Drivers
+          { path: "drivers", element: <CharterDriverList /> },
+          { path: "add-driver", element: <CharterAddDriver /> },
+          { path: "drivers/:driverId/add-details", element: <CharterAddDriverDetails /> },
+          
+          // Charter Vehicles
+          { path: "vehicles", element: <CharterVehicleList /> },
+         
+          
+          // Charter Orders
+          { path: "view-orders", element: <CharterAdminOrders /> },
+        ],
+      },
     ],
   },
   
@@ -75,6 +105,16 @@ export const routes = createBrowserRouter([
           <Suspense fallback={<LoadingScreen />}>
             <ProtectedRoute requiredRole="user">
               <UserDashboard />
+            </ProtectedRoute>
+          </Suspense>
+        ),
+      },
+      {
+        path: "charter",
+        element: (
+          <Suspense fallback={<LoadingScreen />}>
+            <ProtectedRoute requiredRole="user">
+              <BookCharter />
             </ProtectedRoute>
           </Suspense>
         ),

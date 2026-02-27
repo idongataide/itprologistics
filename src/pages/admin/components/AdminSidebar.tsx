@@ -9,6 +9,9 @@ import {
   PlusOutlined,
   CarFilled,
   LogoutOutlined,
+  ShopOutlined,
+  TruckOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import { useOnboardingStore } from '@/global/store';
 
@@ -60,6 +63,28 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       icon: <CarFilled />,
       label: 'Rides',
     },
+    {
+      key: 'charter',
+      icon: <ShopOutlined />,
+      label: 'Charter',
+      children: [
+        {
+          key: '/admin/charter/drivers',
+          icon: <UserOutlined />,
+          label: 'Drivers',
+        },
+        {
+          key: '/admin/charter/view-orders',
+          icon: <EyeOutlined />,
+          label: 'View Orders',
+        },
+        {
+          key: '/admin/charter/vehicles',
+          icon: <TruckOutlined />,
+          label: 'Add Vehicles',
+        },
+      ],
+    },
   ];
 
   const handleMenuClick = ({ key }: { key: string }) => {
@@ -82,6 +107,31 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     navigate("/login");
   };
 
+  // Function to check if a menu item or its children is active
+  const getSelectedKeys = () => {
+    const pathname = location.pathname;
+    
+    // Check if current path starts with any of the charter submenu paths
+    if (pathname.startsWith('/admin/charter/')) {
+      return [pathname];
+    }
+    
+    return [pathname];
+  };
+
+  // Function to get open keys (for submenus) based on current path
+  const getOpenKeys = () => {
+    const pathname = location.pathname;
+    const openKeys: string[] = [];
+    
+    // If we're in charter section, open the charter submenu
+    if (pathname.startsWith('/admin/charter/')) {
+      openKeys.push('charter');
+    }
+    
+    return openKeys;
+  };
+
   return (
     <Sider
       collapsible
@@ -99,8 +149,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         overflow: 'auto',
         display: 'flex',
         flexDirection: 'column',
-        paddingTop:'90px'
-        // zIndex: 1000,
+        paddingTop: '90px'
       }}
     >
       <div
@@ -146,7 +195,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       <div style={{ flex: 1, overflow: 'auto' }}>
         <Menu
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={getSelectedKeys()}
+          defaultOpenKeys={getOpenKeys()}
           items={menuItems}
           onClick={handleMenuClick}
           style={{
