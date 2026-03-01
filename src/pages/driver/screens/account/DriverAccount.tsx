@@ -12,7 +12,8 @@ import {
 } from '@ant-design/icons';
 import { Outlet, NavLink } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { getDriverProfile } from '@/services/driverService';
+import { getDriverProfile, getCharterDriverProfile } from '@/services/driverService';
+import { useOnboardingStore } from '@/global/store';
 
 interface DriverProfileData {
   _id: string;
@@ -35,6 +36,9 @@ interface DriverProfileData {
 const DriverAccountLayout: React.FC = () => {
   const [profile, setProfile] = useState<DriverProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { role } = useOnboardingStore();
+
+  console.log(role,'sdsds')
 
   useEffect(() => {
     fetchDriverProfile();
@@ -43,7 +47,11 @@ const DriverAccountLayout: React.FC = () => {
   const fetchDriverProfile = async () => {
     try {
       setLoading(true);
-      const response = await getDriverProfile();
+      const isCharterDriver = role?.toLowerCase() === 'charter-driver';
+      const response = isCharterDriver 
+        ? await getCharterDriverProfile()
+        : await getDriverProfile();
+      
       if (response.success && response.data) {
         setProfile(response.data);
       } else {
@@ -157,6 +165,7 @@ const DriverAccountLayout: React.FC = () => {
 const DriverProfile: React.FC = () => {
   const [profile, setProfile] = useState<DriverProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { role } = useOnboardingStore();
 
   useEffect(() => {
     fetchDriverProfile();
@@ -165,7 +174,11 @@ const DriverProfile: React.FC = () => {
   const fetchDriverProfile = async () => {
     try {
       setLoading(true);
-      const response = await getDriverProfile();
+      const isCharterDriver = role?.toLowerCase() === 'charter-driver';
+      const response = isCharterDriver 
+        ? await getCharterDriverProfile()
+        : await getDriverProfile();
+      
       if (response.success && response.data) {
         setProfile(response.data);
       } else {
@@ -280,6 +293,56 @@ const DriverProfile: React.FC = () => {
         </div>
       </div>
 
+      {/* Additional fields for charter drivers */}
+      {role?.toLowerCase() === 'charter-driver' && profile && 'licenseNumber' in profile && (
+        <>
+          <Divider className="my-8" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <SafetyCertificateOutlined className="text-gray-400" />
+                <p className="text-gray-600">License Number</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-gray-800 text-base">{(profile as any).licenseNumber || 'Not available'}</p>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <CalendarOutlined className="text-gray-400" />
+                <p className="text-gray-600">Experience</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-gray-800 text-base">{(profile as any).experience || 0} years</p>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <UserOutlined className="text-gray-400" />
+                <p className="text-gray-600">Languages</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-gray-800 text-base">
+                  {(profile as any).languages?.join(', ') || 'Not specified'}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <CarOutlined className="text-gray-400" />
+                <p className="text-gray-600">Total Trips</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-gray-800 text-base">{(profile as any).totalTrips || 0} trips</p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       <Divider className="my-8" />
       
       <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
@@ -354,6 +417,7 @@ const DriverChangePassword: React.FC = () => {
 const DriverVehicleInfo: React.FC = () => {
   const [profile, setProfile] = useState<DriverProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { role } = useOnboardingStore();
 
   useEffect(() => {
     fetchDriverProfile();
@@ -362,7 +426,11 @@ const DriverVehicleInfo: React.FC = () => {
   const fetchDriverProfile = async () => {
     try {
       setLoading(true);
-      const response = await getDriverProfile();
+      const isCharterDriver = role?.toLowerCase() === 'charter-driver';
+      const response = isCharterDriver 
+        ? await getCharterDriverProfile()
+        : await getDriverProfile();
+      
       if (response.success && response.data) {
         setProfile(response.data);
       } else {
@@ -450,9 +518,39 @@ const DriverVehicleInfo: React.FC = () => {
                 <p className="text-gray-800 text-base">{profile.vehicle.color || 'Not specified'}</p>
               </div>
             </div>
+
+            {/* Additional vehicle details for charter drivers */}
+            {role?.toLowerCase() === 'charter-driver' && 'vehicleType' in profile.vehicle && (
+              <>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-gray-600">Vehicle Type</p>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-gray-800 text-base">{(profile.vehicle as any).vehicleType || 'Not specified'}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-gray-600">Capacity</p>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-gray-800 text-base">{(profile.vehicle as any).capacity || 0} passengers</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      ) }
+      )}
+
+      {!profile?.vehicle && (
+        <div className="text-center py-8">
+          <CarOutlined className="text-4xl text-gray-300 mb-3" />
+          <p className="text-gray-500">No vehicle information available</p>
+        </div>
+      )}
 
       <Divider className="my-8" />
       

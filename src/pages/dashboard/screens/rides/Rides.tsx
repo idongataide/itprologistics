@@ -503,7 +503,7 @@ const RideOrders: React.FC = () => {
             </div>
             <Button
               type="primary"
-              onClick={() => navigate('/order-ride')}
+              onClick={() => navigate('/rides/order-ride')}
               className="mt-4 md:mt-0"
             >
               + New Ride

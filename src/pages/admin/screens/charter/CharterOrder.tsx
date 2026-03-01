@@ -288,12 +288,18 @@ const CharterAdminOrders: React.FC = () => {
       key: 'vehicle',
       render: (_: any, record: Order) => {
         const vehicle = record.vehicleNeeded;
+        
+        // Handle case where vehicle is not properly populated
+        if (!vehicle || (typeof vehicle === 'string')) {
+          return <Text type="secondary">N/A</Text>;
+        }
+        
         return (
           <div className="flex items-center gap-2">
-            {vehicle?.thumbnail ? (
+            {(vehicle as Vehicle)?.thumbnail ? (
               <Image
-                src={vehicle.thumbnail}
-                alt={vehicle.vehicleType}
+                src={(vehicle as Vehicle).thumbnail}
+                alt={(vehicle as Vehicle).vehicleType}
                 width={40}
                 height={40}
                 className="object-cover rounded"
@@ -303,12 +309,12 @@ const CharterAdminOrders: React.FC = () => {
               <CarOutlined className="text-gray-400 text-xl" />
             )}
             <div>
-              <div className="font-medium capitalize">{vehicle?.vehicleType}</div>
+              <div className="font-medium capitalize">{(vehicle as Vehicle)?.vehicleType || 'N/A'}</div>
               <div className="text-xs text-gray-500">
-                {vehicle?.make} {vehicle?.model} ({vehicle?.year})
+                {(vehicle as Vehicle)?.make || 'N/A'} {(vehicle as Vehicle)?.model || ''} ({(vehicle as Vehicle)?.year || 'N/A'})
               </div>
               <div className="text-xs text-gray-400">
-                {vehicle?.licensePlate} • {vehicle?.capacity} seats • {vehicle?.color}
+                {(vehicle as Vehicle)?.licensePlate || 'N/A'} • {(vehicle as Vehicle)?.capacity || 0} seats • {(vehicle as Vehicle)?.color || 'N/A'}
               </div>
             </div>
           </div>

@@ -206,6 +206,9 @@ export const createCharterVehicle = async (vehicleData: CreateCharterVehicleData
 // Update charter vehicle
 export const updateCharterVehicle = async (vehicleId: string, vehicleData: UpdateCharterVehicleData): Promise<any> => {
   try {
+    console.log('Updating vehicle with ID:', vehicleId);
+    console.log('Vehicle data:', vehicleData);
+    
     const formData = new FormData();
     
     // Append all fields to FormData
@@ -221,7 +224,10 @@ export const updateCharterVehicle = async (vehicleId: string, vehicleData: Updat
       }
     });
 
-    const response = await fetch(`${API_URL}/admin/charter/vehicles/${vehicleId}`, {
+    const url = `${API_URL}/admin/charter/vehicles/${vehicleId}`;
+    console.log('Request URL:', url);
+    
+    const response = await fetch(url, {
       method: 'PUT',
       headers: getAuthHeaders(true), // Now TypeScript knows this returns HeadersInit
       body: formData,
@@ -230,6 +236,8 @@ export const updateCharterVehicle = async (vehicleId: string, vehicleData: Updat
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('Update failed with status:', response.status);
+      console.error('Response data:', data);
       throw new Error(data.message || 'Failed to update charter vehicle');
     }
 

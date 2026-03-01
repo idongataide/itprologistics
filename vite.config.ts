@@ -46,6 +46,14 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/wallet/, '/admins')
+        },
+        // proxy static uploads from backend to avoid CORS issues when
+        // rendering <img> from a different origin
+        '/uploads': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (p) => p, // forward path directly
         }
       }
     },

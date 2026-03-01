@@ -2,6 +2,20 @@
 
 import { API_URL } from "@/services/config/api";
 
+export interface Vehicle {
+  _id: string;
+  make: string;
+  model: string;
+  year: number;
+  licensePlate: string;
+  color: string;
+  vehicleType: string;
+  capacity: number;
+  thumbnail?: string;
+  status?: string;
+  features?: string[];
+  fuelType?: string;
+}
 
 export interface CharterOrder {
   _id: string;
@@ -15,7 +29,7 @@ export interface CharterOrder {
   pickupLocation: string;
   destination: string;
   status: 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
-  vehicleNeeded: string;
+  vehicleNeeded: Vehicle | string;
   passengers?: number;
   specialRequests?: string;
   tripDate?: string;

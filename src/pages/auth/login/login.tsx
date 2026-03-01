@@ -67,7 +67,7 @@ const Login: React.FC = () => {
         const role = res.user.role?.toLowerCase() || 'user';
         if (role === 'admin') {
           navigate('/admin');
-        } else if (role === 'driver' || role === 'rider') {
+        } else if (role === 'driver' || role === 'rider' || role === 'charter-driver') {
           navigate('/driver-dashboard');
         } else {
           navigate('/dashboard');

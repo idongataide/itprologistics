@@ -26,12 +26,13 @@ const DashboardLayout: React.FC = () => {
   
   // Determine if user is driver or admin based on role
   const isDriver = userRole === 'driver' || userRole === 'rider';
+  const isCharterDriver = userRole === 'charter-driver';
   const isAdmin = userRole === 'admin';
   const isUser = userRole === 'user';
 
   useEffect(() => {
-    console.log('User role:', userRole, 'isDriver:', isDriver, 'isAdmin:', isAdmin, 'isUser:', isUser);
-  }, [userRole, isDriver, isAdmin, isUser]);
+    console.log('User role:', userRole, 'isDriver:', isDriver, 'isCharterDriver:', isCharterDriver, 'isAdmin:', isAdmin, 'isUser:', isUser);
+  }, [userRole, isDriver, isCharterDriver, isAdmin, isUser]);
 
   const handleLogout = () => {
     useOnboardingStore.persist.clearStorage(); 
@@ -106,9 +107,29 @@ const DashboardLayout: React.FC = () => {
     },
   ];
 
+  // Charter Driver navigation
+  const charterDriverNavData = [
+    {
+      id: 1,
+      title: "Requests",
+      URL: "driver-dashboard",
+      icon: <IoIosHome className="text-2xl" />,
+      roles: ['charter-driver']
+    },
+    {
+      id: 2,
+      title: "Account",
+      URL: "driver-dashboard/account",
+      icon: <IoIosPerson className="text-2xl" />,
+      roles: ['charter-driver']
+    },
+  ];
+
   // Select navigation based on user role
   let navData = userNavData;
-  if (isDriver) {
+  if (isCharterDriver) {
+    navData = charterDriverNavData;
+  } else if (isDriver) {
     navData = driverNavData;
   }
   
@@ -153,20 +174,26 @@ const DashboardLayout: React.FC = () => {
         <div className="flex items-center gap-4 md:gap-6">
           {/* Desktop Profile Section */}
           <Link
-            to={isAdmin ? "/admin" : (isDriver ? "/driver-dashboard/account" : "/account")}
+            to={isAdmin ? "/admin" : (isDriver || isCharterDriver ? "/driver-dashboard/account" : "/account")}
             className="hidden md:flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <img
-              alt="avatar"
-              src={datas?.avatar || Images?.avatar}
-              className="w-8 h-8 object-contain rounded-full"
-            />
+            {datas?.avatar ? (
+              <img
+                alt="avatar"
+                src={datas?.avatar || Images?.avatar}
+                className="w-8 h-8 object-contain rounded-full"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <IoIosPerson className="text-gray-600" />
+              </div>
+            )}
             <div className="flex flex-col">
               <span className="text-sm text-[#344054] font-medium">
                 {datas?.userName || datas?.email || "Guest"}
               </span>
               <span className="text-xs text-gray-500 capitalize">
-                {isAdmin ? "Administrator" : userRole}
+                {isAdmin ? "Administrator" : isCharterDriver ? "Charter Driver" : userRole}
               </span>
             </div>
             <IoIosArrowForward className="text-[16px] text-gray-500" />
@@ -184,14 +211,20 @@ const DashboardLayout: React.FC = () => {
           
           {/* Mobile Profile Icon */}
           <Link
-            to={isAdmin ? "/admin" : (isDriver ? "/driver-dashboard/account" : "/account")}
+            to={isAdmin ? "/admin" : (isDriver || isCharterDriver ? "/driver-dashboard/account" : "/account")}
             className="md:hidden flex items-center cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <img
-              alt="avatar"
-              src={datas?.avatar || Images?.avatar}
-              className="w-8 h-8 object-contain rounded-full"
-            />
+            {datas?.avatar ? (
+              <img
+                alt="avatar"
+                src={datas?.avatar || Images?.avatar}
+                className="w-8 h-8 object-contain rounded-full"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <IoIosPerson className="text-gray-600" />
+              </div>
+            )}
           </Link>
         </div>
       </div>

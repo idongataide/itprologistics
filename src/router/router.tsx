@@ -162,7 +162,7 @@ export const routes = createBrowserRouter([
         path: "driver-dashboard",
         element: (
           <Suspense fallback={<LoadingScreen />}>
-            <ProtectedRoute requiredRole="rider">
+            <ProtectedRoute>
               <DriverDashboard />
             </ProtectedRoute>
           </Suspense>
@@ -172,7 +172,7 @@ export const routes = createBrowserRouter([
         path: "driver-dashboard/rides",
         element: (
           <Suspense fallback={<LoadingScreen />}>
-            <ProtectedRoute requiredRole="rider">
+            <ProtectedRoute>
               <DriverRides />
             </ProtectedRoute>
           </Suspense>
@@ -182,7 +182,7 @@ export const routes = createBrowserRouter([
         path: "driver-dashboard/account",
         element: (
           <Suspense fallback={<LoadingScreen />}>
-            <ProtectedRoute requiredRole="rider">
+            <ProtectedRoute>
               <DriverAccountLayout />
             </ProtectedRoute>
           </Suspense>

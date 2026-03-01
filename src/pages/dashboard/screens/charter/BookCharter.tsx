@@ -268,21 +268,34 @@ const BookCharter: React.FC = () => {
               <img 
                 src={vehicle.thumbnail} 
                 alt={vehicle.vehicleType}
-                className="w-8 h-8 object-cover rounded"
+                className="w-10 h-10 object-cover rounded"
+                onError={(e) => {
+                  // Fallback if image fails to load
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                }}
               />
-            ) : (
-              <CarOutlined className="text-gray-400" />
-            )}
+            ) : null}
+            <CarOutlined 
+              className={`text-gray-400 ${vehicle?.thumbnail ? 'hidden' : ''}`} 
+            />
             <div>
-              <div className="font-medium capitalize">{vehicle?.vehicleType || 'N/A'}</div>
-              <div className="text-xs text-gray-500">
-                {vehicle?.make} {vehicle?.model} • {vehicle?.capacity} seats
+              <div className="font-medium capitalize">
+                {vehicle?.vehicleType || 'N/A'}
               </div>
+              <div className="text-xs text-gray-500">
+                {vehicle?.make} {vehicle?.model} • {vehicle?.capacity} seats • {vehicle?.color}
+              </div>
+              {vehicle?.licensePlate && (
+                <div className="text-xs text-gray-400">
+                  Plate: {vehicle.licensePlate}
+                </div>
+              )}
             </div>
           </div>
         );
       },
-      width: 180,
+      width: 220, // Increased width to accommodate more info
     },
     {
       title: 'Passengers',

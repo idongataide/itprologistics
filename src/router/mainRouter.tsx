@@ -16,7 +16,7 @@ const MainRouter: React.FC = () => {
       // Redirect based on role if not already on the correct route
       if (userRole === 'admin' && !currentPath.startsWith('/admin')) {
         navigate('/admin', { replace: true });
-      } else if ((userRole === 'rider' || userRole === 'driver') && !currentPath.includes('driver-dashboard')) {
+      } else if ((userRole === 'rider' || userRole === 'driver' || userRole === 'charter-driver') && !currentPath.includes('driver-dashboard')) {
         navigate('/driver-dashboard', { replace: true });
       } else if (userRole === 'user' && currentPath === '/') {
         navigate('/dashboard', { replace: true });
@@ -30,7 +30,7 @@ const MainRouter: React.FC = () => {
     
     // Show loading screen during redirect
     if ((userRole === 'admin' && !location.pathname.startsWith('/admin')) ||
-        ((userRole === 'rider' || userRole === 'driver') && !location.pathname.includes('driver-dashboard'))) {
+        ((userRole === 'rider' || userRole === 'driver' || userRole === 'charter-driver') && !location.pathname.includes('driver-dashboard'))) {
       return <LoadingScreen />;
     }
   }

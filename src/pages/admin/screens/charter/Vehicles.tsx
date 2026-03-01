@@ -297,12 +297,12 @@ const CharterVehicleList: React.FC = () => {
         </Tag>
       ),
     },
-    {
-      title: 'Fuel Type',
-      dataIndex: 'fuelType',
-      key: 'fuelType',
-      render: (fuel: string) => fuel ? <Tag color="cyan">{fuel}</Tag> : '-',
-    },
+    // {
+    //   title: 'Fuel Type',
+    //   dataIndex: 'fuelType',
+    //   key: 'fuelType',
+    //   render: (fuel: string) => fuel ? <Tag color="cyan">{fuel}</Tag> : '-',
+    // },
     {
       title: 'Status',
       dataIndex: 'status',
@@ -629,8 +629,6 @@ const CharterVehicleList: React.FC = () => {
                   <Option value="van">Van</Option>
                   <Option value="bus">Bus</Option>
                   <Option value="minibus">Minibus</Option>
-                  <Option value="luxury">Luxury</Option>
-                  <Option value="sprinter">Sprinter</Option>
                   <Option value="coaster">Coaster</Option>
                 </Select>
               </Form.Item>
