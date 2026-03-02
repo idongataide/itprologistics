@@ -86,7 +86,14 @@ const CharterVehicleList: React.FC = () => {
       if (url.origin === apiOrigin) {
         return url.pathname + url.search + url.hash;
       }
-      return path; // external host
+      // if we have an absolute URL pointing anywhere else (e.g. the front‑end
+      // domain), redirect it to the API host in production so requests go to
+      // the correct server
+      if (process.env.NODE_ENV === 'production' && url.pathname.startsWith('/uploads')) {
+        const base = API_URL.replace(/\/api\/?$/i, '');
+        return `${base}${url.pathname}${url.search}${url.hash}`;
+      }
+      return path; // external host that we don't rewrite
     } catch {
       // not a full URL, treat as relative path
     }
