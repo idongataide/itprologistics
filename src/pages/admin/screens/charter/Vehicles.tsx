@@ -70,6 +70,17 @@ const CharterVehicleList: React.FC = () => {
   // relative or points to another host we just return it verbatim.
   const getImageUrl = (path: string) => {
     if (!path) return '';
+
+    // convert any hard‑coded localhost:5000 URLs (leftover from local testing)
+    // into the current API host so they still resolve after deployment.
+    // we use API_URL's base in case the production API lives elsewhere.
+    const localhostRegex = /^https?:\/\/localhost:5000(\/.*)?$/i;
+    if (localhostRegex.test(path)) {
+      const rel = path.replace(localhostRegex, '$1');
+      const prodBase = API_URL.replace(/\/api\/?$/i, '');
+      return `${prodBase}${rel.startsWith('/') ? '' : '/'}${rel}`;
+    }
+
     try {
       const url = new URL(path);
       const apiOrigin = new URL(API_URL).origin; // e.g. http://localhost:5000
