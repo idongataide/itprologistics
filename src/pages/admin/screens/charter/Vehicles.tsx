@@ -73,7 +73,6 @@ const CharterVehicleList: React.FC = () => {
 
     // convert any hard‑coded localhost:5000 URLs (leftover from local testing)
     // into the current API host so they still resolve after deployment.
-    // we use API_URL's base in case the production API lives elsewhere.
     const localhostRegex = /^https?:\/\/localhost:5000(\/.*)?$/i;
     if (localhostRegex.test(path)) {
       const rel = path.replace(localhostRegex, '$1');
@@ -90,8 +89,17 @@ const CharterVehicleList: React.FC = () => {
       return path; // external host
     } catch {
       // not a full URL, treat as relative path
-      return path;
     }
+
+    // if we reached here, `path` is relative (e.g. '/uploads/...').
+    // in development we let the Vite proxy handle it; in production we
+    // must prefix the API host so the browser requests the static file
+    // from wherever the backend lives.
+    const base = API_URL.replace(/\/api\/?$/i, '');
+    if (process.env.NODE_ENV === 'production') {
+      return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+    }
+    return path;
   };
 
   useEffect(() => {
