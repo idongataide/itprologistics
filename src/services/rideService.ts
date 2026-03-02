@@ -103,36 +103,36 @@ export interface RideResponse {
 const PRICING_CONFIG = {
   bicycle: {
     baseFare: 200,       // ₦200 base fare
-    perKm: 50,           // ₦50 per km
+    perKm: 300,           // ₦300 per km
     perMinute: 10,       // ₦10 per minute
     serviceFeePercent: 5,
     capacity: 1,
     icon: '🚲',
     name: 'Bicycle',
     color: '#22C55E',
-    estimatedWait: '1-3 min'
+    estimatedWait: '30-60 min'
   },
   motorcycle: {
     baseFare: 300,       // ₦300 base fare
-    perKm: 100,          // ₦100 per km
+    perKm: 400,          // ₦400 per km
     perMinute: 15,       // ₦15 per minute
     serviceFeePercent: 8,
     capacity: 2,
     icon: '🏍️',
     name: 'Motorcycle',
     color: '#F97316',
-    estimatedWait: '2-4 min'
+    estimatedWait: '20-40 min'
   },
   car: {
     baseFare: 500,       // ₦500 base fare
-    perKm: 150,          // ₦150 per km
+    perKm: 600,          // ₦600 per km
     perMinute: 20,       // ₦20 per minute
     serviceFeePercent: 10,
     capacity: 4,
     icon: '🚗',
     name: 'Car',
     color: '#3B82F6',
-    estimatedWait: '3-5 min'
+    estimatedWait: '30-40 min'
   }
 };
 
@@ -488,19 +488,76 @@ export const calculateLocalEstimate = (
   };
 };
 
-export default {
+// Simple per-kilometer estimator (no base fare, no service fee)
+export const calculatePerKmEstimate = (
+  distance: number,
+  rideType: 'bicycle' | 'motorcycle' | 'car'
+): RideEstimate => {
+  const config = PRICING_CONFIG[rideType];
+
+  const distanceFare = distance * config.perKm;
+  const totalFare = distanceFare;
+
+  return {
+    distance,
+    duration: 0,
+    minDuration: 0,
+    maxDuration: 0,
+    baseFare: 0,
+    distanceFare: Math.round(distanceFare),
+    timeFare: 0,
+    serviceFee: 0,
+    totalFare: Math.round(totalFare),
+    currency: 'NGN',
+    rideType,
+    perKmRate: config.perKm,
+    baseRate: config.baseFare
+  };
+};
+
+// Format a distance (km) for display (do not use currency formatter)
+export const formatDistance = (distanceKm: number): string => {
+  if (distanceKm >= 1) return `${distanceKm.toFixed(1)} km`;
+  // show meters for very short distances
+  return `${Math.round(distanceKm * 1000)} m`;
+};
+
+// Estimate duration in minutes based on distance and ride type
+// simple heuristics: bicycle ~2 minutes per km, motorcycle ~1, car ~1.5
+export const estimateDurationFromDistance = (
+  distance: number,
+  rideType: 'bicycle' | 'motorcycle' | 'car'
+): number => {
+  const rateMap: Record<typeof rideType, number> = {
+    bicycle: 10,
+    motorcycle: 5,
+    car: 4
+  };
+  const minutes = distance * rateMap[rideType];
+  return Math.max(1, Math.round(minutes));
+};
+
+// Create a default export object with all the services
+const rideService = {
   getRideEstimate,
   createRide,
   getUserRides,
-  getDriverRides,
   getRideById,
+  getDriverRides,
   cancelRide,
   rateRide,
   getActiveRide,
+  acceptRide,
+  declineRide,
   getAvailableDrivers,
   updateRideStatus,
   calculateLocalEstimate,
-  RIDE_OPTIONS,
+  calculatePerKmEstimate,
+  formatDistance,
+  estimateDurationFromDistance,
   formatCurrency,
+  RIDE_OPTIONS,
   PRICING_CONFIG
 };
+
+export default rideService;

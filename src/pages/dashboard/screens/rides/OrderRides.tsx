@@ -36,7 +36,9 @@ import toast from 'react-hot-toast';
 import rideService, { 
   RIDE_OPTIONS, 
   formatCurrency, 
-  calculateLocalEstimate,
+  calculatePerKmEstimate,
+  formatDistance,
+  estimateDurationFromDistance
 } from '@/services/rideService';
 
 const { Title, Text } = Typography;
@@ -261,9 +263,6 @@ const OrderRide: React.FC = () => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-
-
-        console.log(latitude, longitude,'dsdsd')
         
         // If Google Maps is loaded, try to get address
         if (window.google && window.google.maps) {
@@ -447,12 +446,14 @@ const OrderRide: React.FC = () => {
   
       if (estimateData.success && estimateData.estimate) {
         const estimate = estimateData.estimate;
-        
-        setEstimatedDistance(estimate.distance);
-        setEstimatedFare(estimate.totalFare);
-        setEstimatedTime(estimate.duration);
-        
-        toast.success(`Estimate calculated: ${estimate.distance.toFixed(1)}km, ${formatCurrency(estimate.totalFare)}`);
+        const perKmEstimate = calculatePerKmEstimate(estimate.distance, explicitValues.rideType);
+        const durationEstimate = estimateDurationFromDistance(perKmEstimate.distance, explicitValues.rideType);
+
+        setEstimatedDistance(perKmEstimate.distance);
+        setEstimatedFare(perKmEstimate.totalFare);
+        setEstimatedTime(durationEstimate);
+
+        toast.success(`Estimate calculated: ${perKmEstimate.distance.toFixed(1)}km, ${formatCurrency(perKmEstimate.totalFare)}`);
       } else {
         // Fallback to local calculation
         const calculateHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -474,24 +475,26 @@ const OrderRide: React.FC = () => {
           explicitValues.destLng
         );
         
-        const localEstimate = calculateLocalEstimate(distance, Math.round(distance * 3), explicitValues.rideType);
+        const perKmEstimateLocal = calculatePerKmEstimate(distance, explicitValues.rideType);
+        const durationEstimateLocal = estimateDurationFromDistance(perKmEstimateLocal.distance, explicitValues.rideType);
         
-        setEstimatedDistance(localEstimate.distance);
-        setEstimatedFare(localEstimate.totalFare);
-        setEstimatedTime(localEstimate.duration);
+        setEstimatedDistance(perKmEstimateLocal.distance);
+        setEstimatedFare(perKmEstimateLocal.totalFare);
+        setEstimatedTime(durationEstimateLocal);
         
-        toast.success(`Approximate estimate: ${distance.toFixed(1)}km, ${formatCurrency(localEstimate.totalFare)}`);
+        toast.success(`Approximate estimate: ${distance.toFixed(1)}km, ${formatCurrency(perKmEstimateLocal.totalFare)}`);
       }
     } catch (error: any) {
       // Use fallback
       const distance = 5.0;
-      const localEstimate = calculateLocalEstimate(distance, 15, explicitValues.rideType);
+      const perKmEstimateFallback = calculatePerKmEstimate(distance, explicitValues.rideType);
+      const durationFallback = estimateDurationFromDistance(perKmEstimateFallback.distance, explicitValues.rideType);
       
-      setEstimatedDistance(localEstimate.distance);
-      setEstimatedFare(localEstimate.totalFare);
-      setEstimatedTime(localEstimate.duration);
+      setEstimatedDistance(perKmEstimateFallback.distance);
+      setEstimatedFare(perKmEstimateFallback.totalFare);
+      setEstimatedTime(durationFallback);
       
-      toast.success('Using approximate fare calculation');
+      toast.success('Using approximate per-km fare calculation');
     } finally {
       setEstimating(false);
     }
@@ -810,8 +813,7 @@ const OrderRide: React.FC = () => {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="font-medium">{formatCurrency(option.baseFare)} base</div>
-                              <div className="text-xs text-gray-500">+ {formatCurrency(option.pricePerKm)}/km</div>
+                              <div className="font-medium">{formatCurrency(option.pricePerKm)}/km</div>
                             </div>
                           </div>
                         </Option>
@@ -1027,7 +1029,7 @@ const OrderRide: React.FC = () => {
                       {estimatedDistance && (
                         <div className="flex items-center justify-between">
                           <Text className="text-gray-600">Distance</Text>
-                          <Text strong>{estimatedDistance.toFixed(1)} km</Text>
+                          <Text strong>{formatDistance(estimatedDistance)}</Text>
                         </div>
                       )}
                       {estimatedTime && (
@@ -1044,27 +1046,12 @@ const OrderRide: React.FC = () => {
 
                     <Divider />
 
-                    {/* Fare Breakdown - Updated to show Naira */}
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-2">
                         <Text className="text-md font-semibold">Total Fare</Text>
                         <Title level={3} className="text-[#10B981] mb-0">
                           {estimatedFare ? formatCurrency(estimatedFare) : '₦0'}
                         </Title>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <Text className="text-gray-600">Base fare</Text>
-                          <Text>{estimatedFare ? formatCurrency(estimatedFare * 0.7) : '₦0'}</Text>
-                        </div>
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <Text className="text-gray-600">Distance</Text>
-                          <Text>{estimatedFare ? formatCurrency(estimatedFare * 0.2) : '₦0'}</Text>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <Text className="text-gray-600">Service fee</Text>
-                          <Text>{estimatedFare ? formatCurrency(estimatedFare * 0.1) : '₦0'}</Text>
-                        </div>
                       </div>
                     </div>
 
