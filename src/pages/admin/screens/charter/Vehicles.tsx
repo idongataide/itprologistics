@@ -16,7 +16,7 @@ import {
   Col,
   Statistic,
   Upload,
-  Image,
+  Descriptions,
 } from 'antd';
 import {
   PlusOutlined,
@@ -32,6 +32,8 @@ import charterVehicleService, {
   CreateCharterVehicleData, 
   UpdateCharterVehicleData,
 } from '@/services/admin/charter/charterVehicleService';
+import { API_URL } from '@/services/config/api';
+
 import toast from 'react-hot-toast';
 
 const { Option } = Select;
@@ -56,9 +58,30 @@ const CharterVehicleList: React.FC = () => {
   const [vehicles, setVehicles] = useState<VehicleData[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleData | null>(null);
   const [editingVehicle, setEditingVehicle] = useState<VehicleData | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [form] = Form.useForm();
+
+  // Get a URL suitable for <img> sources.  convert any absolute API_URL
+  // origins to a relative `/uploads` path so that the Vite dev server proxy
+  // can forward the request and avoid CORS problems.  If the value is already
+  // relative or points to another host we just return it verbatim.
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    try {
+      const url = new URL(path);
+      const apiOrigin = new URL(API_URL).origin; // e.g. http://localhost:5000
+      if (url.origin === apiOrigin) {
+        return url.pathname + url.search + url.hash;
+      }
+      return path; // external host
+    } catch {
+      // not a full URL, treat as relative path
+      return path;
+    }
+  };
 
   useEffect(() => {
     fetchVehicles();
@@ -69,7 +92,10 @@ const CharterVehicleList: React.FC = () => {
     try {
       const response = await charterVehicleService.getCharterVehicles();
       if (response.success && response.vehicles) {
-        setVehicles(response.vehicles);
+        setVehicles(response.vehicles.map((v: VehicleData) => ({
+          ...v,
+          thumbnail: getImageUrl(v.thumbnail || ''),
+        })));
       } else {
         toast.error('Failed to fetch vehicles');
       }
@@ -99,9 +125,9 @@ const CharterVehicleList: React.FC = () => {
       setFileList([
         {
           uid: '-1',
-          name: 'thumbnail.png',
+          name: 'thumbnail.jpg',
           status: 'done',
-          url: vehicle.thumbnail,
+          url: getImageUrl(vehicle.thumbnail),
         },
       ]);
     } else {
@@ -125,20 +151,25 @@ const CharterVehicleList: React.FC = () => {
     }
   };
 
+  const handleViewVehicle = (vehicle: VehicleData) => {
+    setSelectedVehicle(vehicle);
+    setViewModalVisible(true);
+  };
+
   const handleModalSubmit = async () => {
     try {
       const values = await form.validateFields();
-      
+
       // Process features if they exist
       let features: string[] = [];
       if (values.features) {
-        features = typeof values.features === 'string' 
+        features = typeof values.features === 'string'
           ? values.features.split(',').map((f: string) => f.trim()).filter(Boolean)
           : values.features;
       }
-      
+
       if (editingVehicle) {
-        // Update existing vehicle
+        // Update existing vehicle using the typed service interface
         const updateData: UpdateCharterVehicleData = {
           make: values.make,
           model: values.model,
@@ -149,15 +180,26 @@ const CharterVehicleList: React.FC = () => {
           capacity: values.capacity,
           status: values.status,
           fuelType: values.fuelType,
-          features: features,
+          features,
         };
-        
-        // Add thumbnail if new one is selected
-        if (fileList.length > 0 && fileList[0].originFileObj) {
-          updateData.thumbnail = fileList[0].originFileObj as File;
+
+        if (fileList.length > 0) {
+          const first: any = fileList[0];
+          console.log('submit update, fileList[0]=', first);
+          const fileObj: File | undefined =
+            first.originFileObj instanceof File ? first.originFileObj :
+            first instanceof File ? first :
+            undefined;
+          console.log('resolved fileObj', fileObj);
+          if (fileObj) {
+            updateData.thumbnail = fileObj;
+          }
         }
-        
-        const response = await charterVehicleService.updateCharterVehicle(editingVehicle._id, updateData);
+
+        const response = await charterVehicleService.updateCharterVehicle(
+          editingVehicle._id,
+          updateData,
+        );
         if (response.success) {
           toast.success('Vehicle updated successfully');
           setModalVisible(false);
@@ -176,14 +218,22 @@ const CharterVehicleList: React.FC = () => {
           vehicleType: values.vehicleType,
           capacity: values.capacity,
           fuelType: values.fuelType,
-          features: features,
+          features,
         };
-        
-        // Add thumbnail if selected
-        if (fileList.length > 0 && fileList[0].originFileObj) {
-          createData.thumbnail = fileList[0].originFileObj as File;
+
+        if (fileList.length > 0) {
+          const first: any = fileList[0];
+          console.log('submit create, fileList[0]=', first);
+          const fileObj: File | undefined =
+            first.originFileObj instanceof File ? first.originFileObj :
+            first instanceof File ? first :
+            undefined;
+          console.log('resolved fileObj', fileObj);
+          if (fileObj) {
+            createData.thumbnail = fileObj;
+          }
         }
-        
+
         const response = await charterVehicleService.createCharterVehicle(createData);
         if (response.success) {
           toast.success('Vehicle created successfully');
@@ -201,6 +251,7 @@ const CharterVehicleList: React.FC = () => {
   const handleModalCancel = () => {
     setModalVisible(false);
     setFileList([]);
+    form.resetFields();
   };
 
   const uploadProps: UploadProps = {
@@ -222,13 +273,57 @@ const CharterVehicleList: React.FC = () => {
         return Upload.LIST_IGNORE;
       }
 
-      setFileList([file]);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      
       return false; // Prevent auto upload
+    },
+    onChange: ({ fileList: newFileList }) => {
+      // Update fileList state
+      setFileList(newFileList);
     },
     fileList,
     maxCount: 1,
     listType: 'picture-card',
     accept: 'image/*',
+    showUploadList: {
+      showPreviewIcon: true,
+      showRemoveIcon: true,
+    },
+  };
+
+  // Custom image component with error handling
+  const VehicleImage = ({ src, alt, width = 50, height = 50, className = "rounded object-cover" }: any) => {
+    const [error, setError] = useState(false);
+    const [imageSrc, setImageSrc] = useState(src ? getImageUrl(src) : '');
+
+    useEffect(() => {
+      setImageSrc(src ? getImageUrl(src) : '');
+      setError(false);
+    }, [src]);
+
+    if (error || !imageSrc) {
+      return (
+        <div 
+          className="bg-gray-100 rounded flex items-center justify-center"
+          style={{ width, height }}
+        >
+          <CarOutlined className="text-gray-400" />
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={imageSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        className={className}
+        onError={() => setError(true)}
+      />
+    );
   };
 
   const columns: ColumnsType<VehicleData> = [
@@ -237,20 +332,12 @@ const CharterVehicleList: React.FC = () => {
       key: 'thumbnail',
       width: 80,
       render: (_, record) => (
-        record.thumbnail ? (
-          <Image
-            src={record.thumbnail}
-            alt={`${record.make} ${record.model}`}
-            width={50}
-            height={50}
-            className="rounded object-cover"
-            preview={false}
-          />
-        ) : (
-          <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-            <CarOutlined className="text-gray-400" />
-          </div>
-        )
+        <VehicleImage 
+          src={record.thumbnail}
+          alt={`${record.make} ${record.model}`}
+          width={50}
+          height={50}
+        />
       ),
     },
     {
@@ -297,12 +384,6 @@ const CharterVehicleList: React.FC = () => {
         </Tag>
       ),
     },
-    // {
-    //   title: 'Fuel Type',
-    //   dataIndex: 'fuelType',
-    //   key: 'fuelType',
-    //   render: (fuel: string) => fuel ? <Tag color="cyan">{fuel}</Tag> : '-',
-    // },
     {
       title: 'Status',
       dataIndex: 'status',
@@ -354,89 +435,6 @@ const CharterVehicleList: React.FC = () => {
     },
   ];
 
-  const handleViewVehicle = (vehicle: VehicleData) => {
-    Modal.info({
-      title: 'Vehicle Details',
-      width: 800,
-      content: (
-        <div>
-          <Row gutter={[16, 16]}>
-            <Col span={24} className="flex justify-center mb-4">
-              {vehicle.thumbnail ? (
-                <Image
-                  src={vehicle.thumbnail}
-                  alt={`${vehicle.make} ${vehicle.model}`}
-                  width={300}
-                  height={200}
-                  className="rounded-lg object-cover"
-                />
-              ) : (
-                <div className="w-64 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <CarOutlined className="text-gray-400 text-4xl" />
-                </div>
-              )}
-            </Col>
-            <Col span={12}>
-              <strong>License Plate:</strong> {vehicle.licensePlate}
-            </Col>
-            <Col span={12}>
-              <strong>Make:</strong> {vehicle.make}
-            </Col>
-            <Col span={12}>
-              <strong>Model:</strong> {vehicle.model}
-            </Col>
-            <Col span={12}>
-              <strong>Year:</strong> {vehicle.year}
-            </Col>
-            <Col span={12}>
-              <strong>Color:</strong> {vehicle.color}
-            </Col>
-            <Col span={12}>
-              <strong>Capacity:</strong> {vehicle.capacity} passengers
-            </Col>
-            <Col span={12}>
-              <strong>Fuel Type:</strong> {vehicle.fuelType || 'N/A'}
-            </Col>
-            <Col span={12}>
-              <strong>Type:</strong> 
-              <Tag color="blue" style={{ marginLeft: 8 }} className="capitalize">
-                {vehicle.vehicleType}
-              </Tag>
-            </Col>
-            <Col span={12}>
-              <strong>Status:</strong> 
-              <Tag color={vehicle.status === 'available' ? 'green' : 'blue'} style={{ marginLeft: 8 }}>
-                {vehicle.status.toUpperCase()}
-              </Tag>
-            </Col>
-            {vehicle.features && vehicle.features.length > 0 && (
-              <Col span={24}>
-                <strong>Features:</strong>
-                <div className="mt-2">
-                  {vehicle.features.map((feature, index) => (
-                    <Tag key={index} color="geekblue" className="mb-1">
-                      {feature.replace(/_/g, ' ')}
-                    </Tag>
-                  ))}
-                </div>
-              </Col>
-            )}
-            <Col span={12}>
-              <strong>Created:</strong> {vehicle.createdAt ? new Date(vehicle.createdAt).toLocaleDateString() : 'N/A'}
-            </Col>
-          </Row>
-        </div>
-      ),
-    });
-  };
-
-  const vehicleStats = {
-    total: vehicles.length,
-    available: vehicles.filter(v => v.status === 'available').length,
-    assigned: vehicles.filter(v => v.status === 'assigned').length,
-    maintenance: vehicles.filter(v => v.status === 'maintenance').length,
-  };
-
   return (
     <div>
       <Row gutter={[16, 16]}>
@@ -446,28 +444,28 @@ const CharterVehicleList: React.FC = () => {
               <Col xs={24} sm={12} md={6}>
                 <Statistic
                   title="Total Vehicles"
-                  value={vehicleStats.total}
+                  value={vehicles.length}
                   prefix={<CarOutlined />}
                 />
               </Col>
               <Col xs={24} sm={12} md={6}>
                 <Statistic
                   title="Available"
-                  value={vehicleStats.available}
+                  value={vehicles.filter(v => v.status === 'available').length}
                   valueStyle={{ color: '#3f8600' }}
                 />
               </Col>
               <Col xs={24} sm={12} md={6}>
                 <Statistic
                   title="Assigned"
-                  value={vehicleStats.assigned}
+                  value={vehicles.filter(v => v.status === 'assigned').length}
                   valueStyle={{ color: '#1890ff' }}
                 />
               </Col>
               <Col xs={24} sm={12} md={6}>
                 <Statistic
                   title="Maintenance"
-                  value={vehicleStats.maintenance}
+                  value={vehicles.filter(v => v.status === 'maintenance').length}
                   valueStyle={{ color: '#faad14' }}
                 />
               </Col>
@@ -499,6 +497,7 @@ const CharterVehicleList: React.FC = () => {
         />
       </Card>
 
+      {/* Add/Edit Modal */}
       <Modal
         title={editingVehicle ? 'Edit Charter Vehicle' : 'Add New Charter Vehicle'}
         open={modalVisible}
@@ -513,7 +512,7 @@ const CharterVehicleList: React.FC = () => {
           layout="vertical"
           name="charterVehicleForm"
           initialValues={{
-            vehicleType: 'car',
+            vehicleType: 'sedan',
             status: 'available',
             capacity: 4,
           }}
@@ -589,7 +588,13 @@ const CharterVehicleList: React.FC = () => {
                 label="License Plate"
                 rules={[{ required: true, message: 'Please enter license plate' }]}
               >
-                <Input placeholder="e.g., ABC-123" style={{ textTransform: 'uppercase' }} />
+                <Input 
+                  placeholder="e.g., ABC-123" 
+                  style={{ textTransform: 'uppercase' }}
+                  onChange={(e) => {
+                    e.target.value = e.target.value.toUpperCase();
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -638,9 +643,9 @@ const CharterVehicleList: React.FC = () => {
           <Form.Item
             name="features"
             label="Features (comma separated)"
-            tooltip="e.g., air_conditioning, wifi, usb_charging"
+            tooltip="e.g., air conditioning, wifi, usb charging"
           >
-            <Input placeholder="air_conditioning, wifi, usb_charging" />
+            <Input placeholder="air conditioning, wifi, usb charging" />
           </Form.Item>
 
           {editingVehicle && (
@@ -658,6 +663,107 @@ const CharterVehicleList: React.FC = () => {
             </Form.Item>
           )}
         </Form>
+      </Modal>
+
+      {/* View Modal */}
+      <Modal
+        title="Vehicle Details"
+        open={viewModalVisible}
+        onCancel={() => setViewModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setViewModalVisible(false)}>
+            Close
+          </Button>,
+        ]}
+        width={800}
+      >
+        {selectedVehicle && (
+          <div className="py-4">
+            <Row gutter={[16, 16]}>
+              <Col span={24} className="flex justify-center mb-4">
+                <VehicleImage 
+                  src={selectedVehicle.thumbnail}
+                  alt={`${selectedVehicle.make} ${selectedVehicle.model}`}
+                  width={300}
+                  height={200}
+                  className="rounded-lg object-cover"
+                />
+              </Col>
+              
+              <Col span={24}>
+                <Descriptions bordered column={2} size="middle">
+                  <Descriptions.Item label="License Plate" span={1}>
+                    <strong>{selectedVehicle.licensePlate}</strong>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Status" span={1}>
+                    <Tag color={
+                      selectedVehicle.status === 'available' ? 'green' : 
+                      selectedVehicle.status === 'assigned' ? 'blue' : 
+                      selectedVehicle.status === 'maintenance' ? 'orange' : 'red'
+                    }>
+                      {selectedVehicle.status.toUpperCase()}
+                    </Tag>
+                  </Descriptions.Item>
+                  
+                  <Descriptions.Item label="Make" span={1}>
+                    {selectedVehicle.make}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Model" span={1}>
+                    {selectedVehicle.model}
+                  </Descriptions.Item>
+                  
+                  <Descriptions.Item label="Year" span={1}>
+                    {selectedVehicle.year}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Color" span={1}>
+                    <span style={{ color: selectedVehicle.color.toLowerCase() }}>
+                      {selectedVehicle.color}
+                    </span>
+                  </Descriptions.Item>
+                  
+                  <Descriptions.Item label="Vehicle Type" span={1}>
+                    <Tag color="blue" className="capitalize">
+                      {selectedVehicle.vehicleType}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Capacity" span={1}>
+                    <Tag color="purple">{selectedVehicle.capacity} passengers</Tag>
+                  </Descriptions.Item>
+                  
+                  <Descriptions.Item label="Fuel Type" span={1}>
+                    {selectedVehicle.fuelType ? (
+                      <Tag color="cyan">{selectedVehicle.fuelType}</Tag>
+                    ) : 'N/A'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Created Date" span={1}>
+                    {selectedVehicle.createdAt ? 
+                      new Date(selectedVehicle.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'N/A'
+                    }
+                  </Descriptions.Item>
+                </Descriptions>
+              </Col>
+
+              {selectedVehicle.features && selectedVehicle.features.length > 0 && (
+                <Col span={24}>
+                  <div className="mt-4">
+                    <h4 className="text-gray-700 font-medium mb-2">Features:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedVehicle.features.map((feature, index) => (
+                        <Tag key={index} color="geekblue" className="mb-1">
+                          {feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </Tag>
+                      ))}
+                    </div>
+                  </div>
+                </Col>
+              )}
+            </Row>
+          </div>
+        )}
       </Modal>
     </div>
   );
