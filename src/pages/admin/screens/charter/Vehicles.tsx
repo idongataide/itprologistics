@@ -16,6 +16,7 @@ import {
   Col,
   Statistic,
   Upload,
+  Image,
   Descriptions,
 } from 'antd';
 import {
@@ -32,8 +33,6 @@ import charterVehicleService, {
   CreateCharterVehicleData, 
   UpdateCharterVehicleData,
 } from '@/services/admin/charter/charterVehicleService';
-import { API_URL } from '@/services/config/api';
-
 import toast from 'react-hot-toast';
 
 const { Option } = Select;
@@ -64,51 +63,6 @@ const CharterVehicleList: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [form] = Form.useForm();
 
-  // Get a URL suitable for <img> sources.  convert any absolute API_URL
-  // origins to a relative `/uploads` path so that the Vite dev server proxy
-  // can forward the request and avoid CORS problems.  If the value is already
-  // relative or points to another host we just return it verbatim.
-  const getImageUrl = (path: string) => {
-    if (!path) return '';
-
-    // convert any hard‑coded localhost:5000 URLs (leftover from local testing)
-    // into the current API host so they still resolve after deployment.
-    const localhostRegex = /^https?:\/\/localhost:5000(\/.*)?$/i;
-    if (localhostRegex.test(path)) {
-      const rel = path.replace(localhostRegex, '$1');
-      const prodBase = API_URL.replace(/\/api\/?$/i, '');
-      return `${prodBase}${rel.startsWith('/') ? '' : '/'}${rel}`;
-    }
-
-    try {
-      const url = new URL(path);
-      const apiOrigin = new URL(API_URL).origin; // e.g. http://localhost:5000
-      if (url.origin === apiOrigin) {
-        return url.pathname + url.search + url.hash;
-      }
-      // if we have an absolute URL pointing anywhere else (e.g. the front‑end
-      // domain), redirect it to the API host in production so requests go to
-      // the correct server
-      if (process.env.NODE_ENV === 'production' && url.pathname.startsWith('/uploads')) {
-        const base = API_URL.replace(/\/api\/?$/i, '');
-        return `${base}${url.pathname}${url.search}${url.hash}`;
-      }
-      return path; // external host that we don't rewrite
-    } catch {
-      // not a full URL, treat as relative path
-    }
-
-    // if we reached here, `path` is relative (e.g. '/uploads/...').
-    // in development we let the Vite proxy handle it; in production we
-    // must prefix the API host so the browser requests the static file
-    // from wherever the backend lives.
-    const base = API_URL.replace(/\/api\/?$/i, '');
-    if (process.env.NODE_ENV === 'production') {
-      return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
-    }
-    return path;
-  };
-
   useEffect(() => {
     fetchVehicles();
   }, []);
@@ -118,10 +72,7 @@ const CharterVehicleList: React.FC = () => {
     try {
       const response = await charterVehicleService.getCharterVehicles();
       if (response.success && response.vehicles) {
-        setVehicles(response.vehicles.map((v: VehicleData) => ({
-          ...v,
-          thumbnail: getImageUrl(v.thumbnail || ''),
-        })));
+        setVehicles(response.vehicles);
       } else {
         toast.error('Failed to fetch vehicles');
       }
@@ -151,9 +102,9 @@ const CharterVehicleList: React.FC = () => {
       setFileList([
         {
           uid: '-1',
-          name: 'thumbnail.jpg',
+          name: 'thumbnail.png',
           status: 'done',
-          url: getImageUrl(vehicle.thumbnail),
+          url: vehicle.thumbnail,
         },
       ]);
     } else {
@@ -185,17 +136,17 @@ const CharterVehicleList: React.FC = () => {
   const handleModalSubmit = async () => {
     try {
       const values = await form.validateFields();
-
+      
       // Process features if they exist
       let features: string[] = [];
       if (values.features) {
-        features = typeof values.features === 'string'
+        features = typeof values.features === 'string' 
           ? values.features.split(',').map((f: string) => f.trim()).filter(Boolean)
           : values.features;
       }
-
+      
       if (editingVehicle) {
-        // Update existing vehicle using the typed service interface
+        // Update existing vehicle
         const updateData: UpdateCharterVehicleData = {
           make: values.make,
           model: values.model,
@@ -206,26 +157,23 @@ const CharterVehicleList: React.FC = () => {
           capacity: values.capacity,
           status: values.status,
           fuelType: values.fuelType,
-          features,
+          features: features,
         };
-
-        if (fileList.length > 0) {
-          const first: any = fileList[0];
-          console.log('submit update, fileList[0]=', first);
-          const fileObj: File | undefined =
-            first.originFileObj instanceof File ? first.originFileObj :
-            first instanceof File ? first :
-            undefined;
-          console.log('resolved fileObj', fileObj);
-          if (fileObj) {
-            updateData.thumbnail = fileObj;
-          }
+        
+        // Add thumbnail if a file is present. it may be a raw File or an
+      // UploadFile with originFileObj depending on how it was added above.
+      if (fileList.length > 0) {
+        const first = fileList[0] as any;
+        const fileObj: File | undefined =
+          first.originFileObj instanceof File ? first.originFileObj :
+          first instanceof File ? first :
+          undefined;
+        if (fileObj) {
+          updateData.thumbnail = fileObj;
         }
-
-        const response = await charterVehicleService.updateCharterVehicle(
-          editingVehicle._id,
-          updateData,
-        );
+      }
+        
+        const response = await charterVehicleService.updateCharterVehicle(editingVehicle._id, updateData);
         if (response.success) {
           toast.success('Vehicle updated successfully');
           setModalVisible(false);
@@ -244,22 +192,21 @@ const CharterVehicleList: React.FC = () => {
           vehicleType: values.vehicleType,
           capacity: values.capacity,
           fuelType: values.fuelType,
-          features,
+          features: features,
         };
-
+        
+        // Add thumbnail if a file is present (either UploadFile or raw File)
         if (fileList.length > 0) {
-          const first: any = fileList[0];
-          console.log('submit create, fileList[0]=', first);
+          const first = fileList[0] as any;
           const fileObj: File | undefined =
             first.originFileObj instanceof File ? first.originFileObj :
             first instanceof File ? first :
             undefined;
-          console.log('resolved fileObj', fileObj);
           if (fileObj) {
             createData.thumbnail = fileObj;
           }
         }
-
+        
         const response = await charterVehicleService.createCharterVehicle(createData);
         if (response.success) {
           toast.success('Vehicle created successfully');
@@ -277,12 +224,16 @@ const CharterVehicleList: React.FC = () => {
   const handleModalCancel = () => {
     setModalVisible(false);
     setFileList([]);
-    form.resetFields();
   };
 
   const uploadProps: UploadProps = {
     onRemove: () => {
       setFileList([]);
+    },
+    onChange: (info) => {
+      // keep fileList state in sync with antd's internal list; only keep the
+      // last file (because maxCount is 1)
+      setFileList(info.fileList.slice(-1));
     },
     beforeUpload: (file) => {
       // Validate file type
@@ -299,73 +250,46 @@ const CharterVehicleList: React.FC = () => {
         return Upload.LIST_IGNORE;
       }
 
-      // Create preview URL
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      
+      // wrap the raw File into an UploadFile object so that originFileObj is
+      // always available later and we can show a preview URL immediately
+      const uploadFile: UploadFile = {
+        uid: file.uid || `${Date.now()}`,
+        name: file.name,
+        status: 'done',
+        originFileObj: file,
+        url: URL.createObjectURL(file),
+      };
+
+      setFileList([uploadFile]);
       return false; // Prevent auto upload
-    },
-    onChange: ({ fileList: newFileList }) => {
-      // Update fileList state
-      setFileList(newFileList);
     },
     fileList,
     maxCount: 1,
     listType: 'picture-card',
     accept: 'image/*',
-    showUploadList: {
-      showPreviewIcon: true,
-      showRemoveIcon: true,
-    },
-  };
-
-  // Custom image component with error handling
-  const VehicleImage = ({ src, alt, width = 50, height = 50, className = "rounded object-cover" }: any) => {
-    const [error, setError] = useState(false);
-    const [imageSrc, setImageSrc] = useState(src ? getImageUrl(src) : '');
-
-    useEffect(() => {
-      setImageSrc(src ? getImageUrl(src) : '');
-      setError(false);
-    }, [src]);
-
-    if (error || !imageSrc) {
-      return (
-        <div 
-          className="bg-gray-100 rounded flex items-center justify-center"
-          style={{ width, height }}
-        >
-          <CarOutlined className="text-gray-400" />
-        </div>
-      );
-    }
-
-    return (
-      <img
-        src={imageSrc}
-        alt={alt}
-        width={width}
-        height={height}
-        className={className}
-        onError={() => setError(true)}
-      />
-    );
   };
 
   const columns: ColumnsType<VehicleData> = [
-    {
-      title: 'Thumbnail',
-      key: 'thumbnail',
-      width: 80,
-      render: (_, record) => (
-        <VehicleImage 
+   {
+    title: 'Thumbnail',
+    key: 'thumbnail',
+    width: 80,
+    render: (_, record) => (
+      record.thumbnail ? (
+        <img
           src={record.thumbnail}
           alt={`${record.make} ${record.model}`}
           width={50}
           height={50}
+          className="rounded object-cover"
         />
-      ),
-    },
+      ) : (
+        <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+          <CarOutlined className="text-gray-400" />
+        </div>
+      )
+    ),
+  },
     {
       title: 'License Plate',
       dataIndex: 'licensePlate',
@@ -538,7 +462,7 @@ const CharterVehicleList: React.FC = () => {
           layout="vertical"
           name="charterVehicleForm"
           initialValues={{
-            vehicleType: 'sedan',
+            vehicleType: 'car',
             status: 'available',
             capacity: 4,
           }}
@@ -614,13 +538,7 @@ const CharterVehicleList: React.FC = () => {
                 label="License Plate"
                 rules={[{ required: true, message: 'Please enter license plate' }]}
               >
-                <Input 
-                  placeholder="e.g., ABC-123" 
-                  style={{ textTransform: 'uppercase' }}
-                  onChange={(e) => {
-                    e.target.value = e.target.value.toUpperCase();
-                  }}
-                />
+                <Input placeholder="e.g., ABC-123" style={{ textTransform: 'uppercase' }} />
               </Form.Item>
             </Col>
           </Row>
@@ -669,9 +587,9 @@ const CharterVehicleList: React.FC = () => {
           <Form.Item
             name="features"
             label="Features (comma separated)"
-            tooltip="e.g., air conditioning, wifi, usb charging"
+            tooltip="e.g., air_conditioning, wifi, usb_charging"
           >
-            <Input placeholder="air conditioning, wifi, usb charging" />
+            <Input placeholder="air_conditioning, wifi, usb_charging" />
           </Form.Item>
 
           {editingVehicle && (
@@ -707,13 +625,19 @@ const CharterVehicleList: React.FC = () => {
           <div className="py-4">
             <Row gutter={[16, 16]}>
               <Col span={24} className="flex justify-center mb-4">
-                <VehicleImage 
-                  src={selectedVehicle.thumbnail}
-                  alt={`${selectedVehicle.make} ${selectedVehicle.model}`}
-                  width={300}
-                  height={200}
-                  className="rounded-lg object-cover"
-                />
+                {selectedVehicle.thumbnail ? (
+                  <Image
+                    src={selectedVehicle.thumbnail}
+                    alt={`${selectedVehicle.make} ${selectedVehicle.model}`}
+                    width={300}
+                    height={200}
+                    className="rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="w-64 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <CarOutlined className="text-gray-400 text-4xl" />
+                  </div>
+                )}
               </Col>
               
               <Col span={24}>
